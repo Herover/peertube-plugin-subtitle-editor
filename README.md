@@ -7,6 +7,7 @@ Differences are:
 
 * both backend and frontend code are in Typescript
 * backend code is in a subdirectory, so it can easily be separated in multiple module files
+* classic CSS are replaced by [SCSS](https://fr.wikipedia.org/wiki/Sass_(langage))
 * there are linting rules to ensure code quality
 
 ## Compilation
@@ -53,6 +54,8 @@ rules. If you don't want this, you can add `.vscode` to the `.gitignore` file.
 Check the `.eslintrc.json` for special linting rules that I recommand
 (for example `"@typescript-eslint/no-unused-vars": [2, {"argsIgnorePattern": "^_"}]`
 that allow you to prefix unused arguments with `_`).
+
+Note: there is linting for both Typescript and SCSS files.
 
 ## ESBuild vs Typescript
 

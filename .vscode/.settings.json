@@ -1,5 +1,6 @@
 {
   "eslint.alwaysShowStatus": true,
   "eslint.lintTask.enable": true,
-  "eslint.lintTask.options": " --ext .ts --ext .js ."
+  "eslint.lintTask.options": " --ext .ts --ext .js .",
+  "stylelint.validate": ["css", "scss"]
 }
