@@ -1,11 +1,11 @@
 {
-  "name": "peertube-plugin-quickstart-typescript",
-  "description": "PeerTube plugin quickstart typescript",
-  "version": "1.0.0",
+  "name": "peertube-plugin-subtitle-editor",
+  "description": "PeerTube subtitle editor",
+  "version": "0.0.1",
   "license": "AGPL-3.0",
   "author": {
-    "name": "John Livingston",
-    "url": "https://github.com/JohnXLivingston"
+    "name": "Herover",
+    "url": "https://github.com/Herover"
   },
   "bugs": "https://github.com/JohnXLivingston/peertube-plugin-quickstart-typescript/issues",
   "clientScripts": [
@@ -20,7 +20,7 @@
     "dist/assets/style.css"
   ],
   "engine": {
-    "peertube": ">=4.2.0"
+    "peertube": ">=6.0.0"
   },
   "homepage": "https://github.com/JohnXLivingston/peertube-plugin-quickstart-typescript",
   "keywords": [
@@ -47,7 +47,7 @@
     "fr-FR": "./languages/fr.json"
   },
   "devDependencies": {
-    "@peertube/peertube-types": "^4.2.2",
+    "@peertube/peertube-types": "^6.0.4",
     "@tsconfig/node16": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
@@ -60,5 +60,9 @@
     "stylelint-config-recommended-scss": "^7.0.0",
     "stylelint-config-standard-scss": "^5.0.0",
     "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "@peertube/embed-api": "^0.0.7",
+    "vtt.js": "^0.13.0"
   }
 }

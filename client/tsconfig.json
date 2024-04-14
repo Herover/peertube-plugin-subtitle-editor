@@ -22,7 +22,8 @@
 		"paths": {}
 	},
 	"include": [
-		"./**/*"
+		"./**/*",
+		"./global.d.ts"
 	],
 	"exclude": []
 }
