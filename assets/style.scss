@@ -1,6 +1,24 @@
+.cues {
+  width: 100%;
+}
 .cues input {
   width: 100%;
 }
 .cue-highlight {
   font-weight: bold;
+}
+
+.editor {
+  position: sticky;
+  top: 50px;
+}
+.video-player {
+  position: relative;
+  height: 0;
+  width: 100%;
+  padding-top: 56.25%;
+}
+.video-player iframe {
+  position: absolute;
+  inset: 0px;
 }

@@ -71,15 +71,23 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
 
           cueEl.appendChild(renderCueTable(cues));
 
+          const editorEl = document.createElement("div");
+          editorEl.setAttribute("class", "editor");
+          playerEl.appendChild(editorEl);
+          
+          const playerHolderEl = document.createElement("div");
+          playerHolderEl.setAttribute("class", "video-player");
+          editorEl.appendChild(playerHolderEl);
+
           const playerIframeEl = document.createElement("iframe");
           playerIframeEl.setAttribute("title", "TV STOP 18. maj deltagere");
-          playerIframeEl.setAttribute("width", "560");
-          playerIframeEl.setAttribute("height", "315");
+          playerIframeEl.setAttribute("width", "100%");
+          playerIframeEl.setAttribute("height", "100%");
           playerIframeEl.setAttribute("src", "/videos/embed/" + parameters.id + "?api=1");
           playerIframeEl.setAttribute("frameborder", "0");
           playerIframeEl.setAttribute("allowfullscreen", "");
           playerIframeEl.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
-          playerEl.appendChild(playerIframeEl);
+          playerHolderEl.appendChild(playerIframeEl);
           let player = new PeerTubePlayer(playerIframeEl);
 
           let lastPosition = 0;
