@@ -1,24 +1,34 @@
-.cues {
+.subtitle-cues {
   width: 100%;
 }
-.cues input {
+.subtitle-cues input {
   width: 100%;
 }
-.cue-highlight {
+.subtitle-cue-highlight {
   font-weight: bold;
 }
 
-.editor {
+.subtitle-cues > tbody > tr > td:first-child {
+  color: #aaaaaa;
+}
+.subtitle-cues > tbody > tr > td:nth-child(4) {
+  cursor: pointer;
+}
+
+.subtitle-editor {
   position: sticky;
   top: 50px;
 }
-.video-player {
+#subtitle-video-viewer {
   position: relative;
   height: 0;
   width: 100%;
   padding-top: 56.25%;
 }
-.video-player iframe {
+#subtitle-video-viewer iframe {
   position: absolute;
   inset: 0px;
+}
+#subtitle-cue-input {
+  width: 100%;
 }

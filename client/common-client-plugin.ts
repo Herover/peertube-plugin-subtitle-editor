@@ -1,7 +1,8 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { renderCueTable } from './render';
+import { renderBasics, renderCueTable } from './render';
+import { formatTime } from './util';
 
 async function register ({ peertubeHelpers, registerHook, registerClientRoute }: RegisterClientOptions): Promise<void> {
   // const message = await peertubeHelpers.translate('Hello world')
@@ -27,18 +28,21 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
 
   registerClientRoute({
     route: 'subtitles',
-    onMount: async ({ rootEl }: any) => {
+    onMount: async ({ rootEl }: { rootEl: HTMLDivElement }) => {
       const main = document.createElement("div");
       main.setAttribute("class", "margin-content row");
       rootEl.appendChild(main);
 
-      const cueEl = document.createElement("div")
-      cueEl.setAttribute("class", "col-md-6")
-      main.appendChild(cueEl);
+      renderBasics(rootEl);
+      const cuesElement = rootEl.querySelector("#subtitle-cues");
+      const videoViewerElement = rootEl.querySelector("#subtitle-video-viewer");
+      const cueInputElement = rootEl.querySelector<HTMLTextAreaElement>("#subtitle-cue-input");
+      const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
+      if (!cuesElement || !videoViewerElement || !cueInputElement || !timestampElement) {
+        console.warn("unable to render missing stuff")
 
-      const playerEl = document.createElement("div")
-      playerEl.setAttribute("class", "col-md-6")
-      main.appendChild(playerEl);
+        return;
+      }
 
       const [_, query] = location.href.split('?')
       if (query) {
@@ -69,15 +73,7 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
           vttParser.flush();
           console.log(cues);
 
-          cueEl.appendChild(renderCueTable(cues));
-
-          const editorEl = document.createElement("div");
-          editorEl.setAttribute("class", "editor");
-          playerEl.appendChild(editorEl);
-          
-          const playerHolderEl = document.createElement("div");
-          playerHolderEl.setAttribute("class", "video-player");
-          editorEl.appendChild(playerHolderEl);
+          renderCueTable(cuesElement, cues, {});
 
           const playerIframeEl = document.createElement("iframe");
           playerIframeEl.setAttribute("title", "TV STOP 18. maj deltagere");
@@ -87,15 +83,18 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
           playerIframeEl.setAttribute("frameborder", "0");
           playerIframeEl.setAttribute("allowfullscreen", "");
           playerIframeEl.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
-          playerHolderEl.appendChild(playerIframeEl);
+          videoViewerElement.appendChild(playerIframeEl);
           let player = new PeerTubePlayer(playerIframeEl);
 
           let lastPosition = 0;
           player.addEventListener("playbackStatusUpdate", ({ position }: { position: number }) => {
             if (position != lastPosition) {
-              cueEl.innerHTML = "";
-              cueEl.appendChild(renderCueTable(cues, position));
+              timestampElement.innerText = formatTime(position);
+
+              cuesElement.innerHTML = "";
+              renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => cueInputElement.innerText = cue.text) });
               lastPosition = position;
+
             }
           });
           // await fetch(`/api/v1/videos/${parameters.id}/captions/da`, { method: "PUT" })

@@ -1,38 +1,56 @@
-export const renderCueTable = (cues: any[], time?: number) => {
-  const table = document.createElement("table");
-  table.setAttribute("class", "cues")
+import { formatTime } from "./util";
 
+export const renderBasics = (parent: Element) => {
+  parent.innerHTML = `
+    <div class="margin-content row">
+      <div class="col-md-6">
+        <table class="subtitle-cues">
+          <thead>
+            <tr><th>ID</th><th>Start time</th><th>End time</th><th>Text</th></tr>
+          </thead>
+          <tbody id="subtitle-cues"></tbody>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <div class="subtitle-editor">
+          <div id="subtitle-video-viewer"></div>
+          <div id="subtitle-video-controls">
+            <button class="btn btn-light">-1s</button>
+            <button class="btn btn-light">Pause/play</button>
+            <button class="btn btn-light">+1s</button>
+            
+            <button class="btn btn-light">Insert here</button>
+            <button class="btn btn-light">Select current</button>
+          </div>
+          <span id="subtitle-timestamp">00:00.00</span>
+          <textarea id="subtitle-cue-input" width="100%"></textarea>
+        </div>
+      </div>
+    </div>
+  `;
+};
 
-  const head = document.createElement("tr");
-  table.appendChild(head);
+interface RenderTableOpts {
+  time?: number;
+  onCueSelected?: (cue: any, i: number) => any;
+};
 
-  let e = document.createElement("th");
-  e.innerText = "ID";
-  head.appendChild(e);
-
-  e = document.createElement("th");
-  e.innerText = "Start time";
-  head.appendChild(e);
-
-  e = document.createElement("th");
-  e.innerText = "End time";
-  head.appendChild(e);
-
-  e = document.createElement("th");
-  e.innerText = "Text";
-  head.appendChild(e);
-
-  cues.forEach(cue => {
+export const renderCueTable = (table: Element, cues: any[], opts: RenderTableOpts) => {
+  cues.forEach((cue, i) => {
     let isViewed = false;
-    if (typeof time == "number") {
-      if (cue.startTime < time && time < cue.endTime) {
+    if (typeof opts.time == "number") {
+      if (cue.startTime < opts.time && opts.time < cue.endTime) {
         isViewed = true;
       }
     }
 
     const row = document.createElement("tr")
     if (isViewed) {
-      row.setAttribute("class", "cue-highlight");
+      row.setAttribute("class", "subtitle-cue-highlight");
+    }
+    const onCueSelected = opts.onCueSelected;
+    if (typeof onCueSelected == "function") {
+      row.addEventListener("click", () => onCueSelected(cue, i));
     }
 
     let e = document.createElement("td");
@@ -40,17 +58,17 @@ export const renderCueTable = (cues: any[], time?: number) => {
     row.appendChild(e);
 
     e = document.createElement("td");
-    e.innerText = cue.startTime;
+    e.innerText = formatTime(cue.startTime);
     row.appendChild(e);
 
     e = document.createElement("td");
-    e.innerText = cue.endTime;
+    e.innerText = formatTime(cue.endTime);
     row.appendChild(e);
 
     e = document.createElement("td");
-    let input = document.createElement("input")
-    input.value = cue.text;
-    e.appendChild(input);
+    let text = document.createElement("span")
+    text.innerText = cue.text;
+    e.appendChild(text);
     row.appendChild(e);
 
     table.appendChild(row);
