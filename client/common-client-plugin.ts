@@ -1,8 +1,11 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { renderBasics, renderCueTable } from './render';
+import { generateVTT, renderBasics, renderCueTable } from './render';
 import { formatTime } from './util';
+import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
+
+const newCueLength = 5;
 
 async function register ({ peertubeHelpers, registerHook, registerClientRoute }: RegisterClientOptions): Promise<void> {
   // const message = await peertubeHelpers.translate('Hello world')
@@ -32,13 +35,31 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
       const main = document.createElement("div");
       main.setAttribute("class", "margin-content row");
       rootEl.appendChild(main);
+      
+      let videoPosition = 0;
 
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
       const videoViewerElement = rootEl.querySelector("#subtitle-video-viewer");
+      
       const cueInputElement = rootEl.querySelector<HTMLTextAreaElement>("#subtitle-cue-input");
+      const cueAlignElements = rootEl.querySelectorAll<HTMLInputElement>("input[name=subtitle-align]")
+      const cueSetStartElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-start")
+      const cueSetEndElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-end")
+      const cueInsertCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new")
+      const cueSelectCurrentCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-select-current")
+      
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
-      if (!cuesElement || !videoViewerElement || !cueInputElement || !timestampElement) {
+      const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
+      if (!cuesElement
+        || !videoViewerElement
+        || !cueInputElement
+        || !cueSetStartElement
+        || !cueSetEndElement
+        || !cueInsertCueElement
+        || !cueSelectCurrentCueElement
+        || !timestampElement
+        || !vttResultElement) {
         console.warn("unable to render missing stuff")
 
         return;
@@ -52,31 +73,90 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
         }, {} as {[key: string]: string})
 
         if (parameters.id) {
-          const video = await fetch(`/api/v1/videos/${parameters.id}/captions`)
-          console.log("video", video)
-          if (video.status !== 200) {
+          const [videoDataRequest, captionsRequest] = await Promise.all([
+            fetch(`/api/v1/videos/${parameters.id}`),
+            fetch(`/api/v1/videos/${parameters.id}/captions`),
+          ]);
+
+          if (captionsRequest.status !== 200 || videoDataRequest.status !== 200) {
             main.innerHTML = "can't find video with id " + parameters.id;
             return;
           }
-          const data = await Promise.all(
-            (await video.json()).data
-              .map((d: any) => fetch(d.captionPath).then(d => d.text()).then(e => e))
+
+          const captions: { data: VideoCaption[] } = await captionsRequest.json();
+          const captionFiles = await Promise.all(
+            captions.data
+              .map((d) => fetch(d.captionPath).then(d => d.text()).then(e => e))
           )
-          console.log(data)
+          
+          const videoData: VideoDetails = await videoDataRequest.json();
 
           const cues: any[] = [];
           const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
           vttParser.oncue = function(cue: any) {
             cues.push(cue);
           };
-          vttParser.parse(data[0]);
+          vttParser.parse(captionFiles[0]);
           vttParser.flush();
           console.log(cues);
 
-          renderCueTable(cuesElement, cues, {});
+          cueSelectCurrentCueElement.onclick = () => {
+            const cue = cues.find(c => c.startTime < videoPosition && videoPosition < c.endTime);
+            if (cue) {
+              selectCue(cue);
+              renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+              vttResultElement.innerText = generateVTT(cues);
+            }
+          };
+          cueInsertCueElement.onclick = () => {
+            const cue = new VTTCue(videoPosition, videoPosition + newCueLength, "");
+            cues.push(cue);
+            selectCue(cue);
+            renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+            vttResultElement.innerText = generateVTT(cues);
+          };
+
+
+          const selectCue = (cue: any) => {
+            cueInputElement.value = cue.text;
+            cueAlignElements.forEach(el => {
+              if (el.value == cue.align) el.checked = true;
+              else el.checked = false;
+
+              el.onclick = () => {
+                if (el.checked) {
+                  cue.align = el.value;
+                  renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                  vttResultElement.innerText = generateVTT(cues);
+                }
+              };
+
+              cueInputElement.onkeyup = () => {
+                cue.text = cueInputElement.value;
+                renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                vttResultElement.innerText = generateVTT(cues);
+              };
+            });
+
+            cueSetStartElement.onclick = () => {
+              console.log(videoPosition, cue, cues)
+              cue.startTime = videoPosition;
+              renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+              vttResultElement.innerText = generateVTT(cues);
+            };
+            cueSetEndElement.onclick = () => {
+              cue.endTime = videoPosition;
+              renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+              vttResultElement.innerText = generateVTT(cues);
+            };
+
+            renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+          };
+
+
 
           const playerIframeEl = document.createElement("iframe");
-          playerIframeEl.setAttribute("title", "TV STOP 18. maj deltagere");
+          playerIframeEl.setAttribute("title", videoData.name);
           playerIframeEl.setAttribute("width", "100%");
           playerIframeEl.setAttribute("height", "100%");
           playerIframeEl.setAttribute("src", "/videos/embed/" + parameters.id + "?api=1");
@@ -86,17 +166,18 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
           videoViewerElement.appendChild(playerIframeEl);
           let player = new PeerTubePlayer(playerIframeEl);
 
-          let lastPosition = 0;
           player.addEventListener("playbackStatusUpdate", ({ position }: { position: number }) => {
-            if (position != lastPosition) {
+            if (position != videoPosition) {
               timestampElement.innerText = formatTime(position);
 
-              cuesElement.innerHTML = "";
-              renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => cueInputElement.innerText = cue.text) });
-              lastPosition = position;
+              renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
+              videoPosition = position;
 
             }
           });
+
+          renderCueTable(cuesElement, cues, { onCueSelected: (cue => selectCue(cue)) });
+          vttResultElement.innerText = generateVTT(cues);
           // await fetch(`/api/v1/videos/${parameters.id}/captions/da`, { method: "PUT" })
           // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
         } else {

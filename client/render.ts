@@ -3,6 +3,14 @@ import { formatTime } from "./util";
 export const renderBasics = (parent: Element) => {
   parent.innerHTML = `
     <div class="margin-content row">
+      <div class="col-md-12">
+        <div id="subtitle-languages">
+          <button class="btn btn-primary">dk</button>
+          <button class="btn">en</button>
+        </div>
+      </div>
+    </div>
+    <div class="margin-content row">
       <div class="col-md-6">
         <table class="subtitle-cues">
           <thead>
@@ -19,11 +27,21 @@ export const renderBasics = (parent: Element) => {
             <button class="btn btn-light">Pause/play</button>
             <button class="btn btn-light">+1s</button>
             
-            <button class="btn btn-light">Insert here</button>
-            <button class="btn btn-light">Select current</button>
+            <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
+            <button id="subtitle-select-current" class="btn btn-light">Select current</button>
           </div>
-          <span id="subtitle-timestamp">00:00.00</span>
+          <p>
+            <span id="subtitle-timestamp">00:00:00.000</span>
+            <button id="subtitle-set-start" class="btn btn-light">Set start</button>
+            <button id="subtitle-set-end" class="btn btn-light">Set end</button>
+          </p>
           <textarea id="subtitle-cue-input" width="100%"></textarea>
+          <p>
+            <label>Left <input value="left" name="subtitle-align" type="radio"/></label>
+            <label>Center <input value="center" name="subtitle-align" type="radio"/></label>
+            <label>Right <input value="right" name="subtitle-align" type="radio"/></label>
+          </p>
+          <pre id="subtitle-vtt-result"></pre>
         </div>
       </div>
     </div>
@@ -36,43 +54,68 @@ interface RenderTableOpts {
 };
 
 export const renderCueTable = (table: Element, cues: any[], opts: RenderTableOpts) => {
-  cues.forEach((cue, i) => {
-    let isViewed = false;
-    if (typeof opts.time == "number") {
-      if (cue.startTime < opts.time && opts.time < cue.endTime) {
-        isViewed = true;
+  table.innerHTML = "";
+
+  cues.map(e => e)
+    .sort((a, b) => a.startTime - b.startTime)
+    .forEach((cue, i) => {
+      let isViewed = false;
+      if (typeof opts.time == "number") {
+        if (cue.startTime < opts.time && opts.time < cue.endTime) {
+          isViewed = true;
+        }
       }
-    }
 
-    const row = document.createElement("tr")
-    if (isViewed) {
-      row.setAttribute("class", "subtitle-cue-highlight");
-    }
-    const onCueSelected = opts.onCueSelected;
-    if (typeof onCueSelected == "function") {
-      row.addEventListener("click", () => onCueSelected(cue, i));
-    }
+      const row = document.createElement("tr")
+      if (isViewed) {
+        row.setAttribute("class", "subtitle-cue-highlight");
+      }
+      const onCueSelected = opts.onCueSelected;
+      if (typeof onCueSelected == "function") {
+        row.addEventListener("click", () => onCueSelected(cue, i));
+      }
 
-    let e = document.createElement("td");
-    e.innerText = cue.id;
-    row.appendChild(e);
+      let e = document.createElement("td");
+      e.innerText = cue.id;
+      row.appendChild(e);
 
-    e = document.createElement("td");
-    e.innerText = formatTime(cue.startTime);
-    row.appendChild(e);
+      e = document.createElement("td");
+      e.innerText = formatTime(cue.startTime);
+      row.appendChild(e);
 
-    e = document.createElement("td");
-    e.innerText = formatTime(cue.endTime);
-    row.appendChild(e);
+      e = document.createElement("td");
+      e.innerText = formatTime(cue.endTime);
+      row.appendChild(e);
 
-    e = document.createElement("td");
-    let text = document.createElement("span")
-    text.innerText = cue.text;
-    e.appendChild(text);
-    row.appendChild(e);
+      e = document.createElement("td");
+      let text = document.createElement("span")
+      text.innerText = cue.text;
+      e.appendChild(text);
+      row.appendChild(e);
 
-    table.appendChild(row);
-  });
+      table.appendChild(row);
+    });
 
   return table;
+};
+
+export const generateVTT = (cues: any[]) => {
+  let result = "WEBVTT FILE\n\n";
+
+  cues.forEach(cue => {
+    if (cue.id) {
+      result += cue.id + "\n";
+    }
+
+    result += `${formatTime(cue.startTime)} --> ${formatTime(cue.endTime)}`;
+    if (cue.align != "center") {
+      result += " align:" + cue.align;
+    }
+    result += "\n";
+
+    result += cue.text;
+    result += "\n\n";
+  });
+
+  return result;
 };

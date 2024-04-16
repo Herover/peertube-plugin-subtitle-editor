@@ -9,10 +9,18 @@
 }
 
 .subtitle-cues > tbody > tr > td:first-child {
-  color: #aaaaaa;
+  color: var(--mainForegroundColor);
+  font-weight: bold;
 }
 .subtitle-cues > tbody > tr > td:nth-child(4) {
   cursor: pointer;
+}
+.subtitle-cues > tbody > tr:nth-child(2n+1) {
+  background-color: var(--greyBackgroundColor);
+}
+.subtitle-cues > tbody > tr > td, .subtitle-cues > thead > tr > th {
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .subtitle-editor {
