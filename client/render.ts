@@ -20,9 +20,9 @@ export const renderBasics = (parent: Element) => {
         <div class="subtitle-editor">
           <div id="subtitle-video-viewer"></div>
           <div id="subtitle-video-controls">
-            <button id="subtitle-seek-plus-1" class="btn btn-light">-1s</button>
+            <button id="subtitle-seek-minus-1" class="btn btn-light">-1s</button>
             <button id="subtitle-pause-play" class="btn btn-light">Pause/play</button>
-            <button id="subtitle-seek-minus-1" class="btn btn-light">+1s</button>
+            <button id="subtitle-seek-plus-1" class="btn btn-light">+1s</button>
             
             <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
             <button id="subtitle-select-current" class="btn btn-light">Select current</button>

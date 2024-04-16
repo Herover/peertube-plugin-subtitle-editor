@@ -1,7 +1,7 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { generateVTT, renderBasics, renderCueTable, renderLanguageSelector } from './render';
+import { renderBasics, renderCueTable, renderLanguageSelector } from './render';
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
 
@@ -37,6 +37,7 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
       rootEl.appendChild(main);
       
       let videoPosition = 0;
+      let videoIsPlaying = false;
       let currentCaptionLanguageId = "";
       let playerStatusEventListener: any;
 
@@ -51,11 +52,17 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
       const cueInsertCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new")
       const cueSelectCurrentCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-select-current")
       const languageListElement = rootEl.querySelector<HTMLDivElement>("#subtitle-languages")
+      const seekPlusElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-seek-plus-1");
+      const pausePlayElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-pause-play");
+      const seekMinusElement = rootEl.querySelector<HTMLDivElement>("#subtitle-seek-minus-1");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
       if (!cuesElement
         || !videoViewerElement
+        || !seekPlusElement
+        || !pausePlayElement
+        || !seekMinusElement
         || !cueInputElement
         || !cueSetStartElement
         || !cueSetEndElement
@@ -105,6 +112,9 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
           playerIframeEl.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
           videoViewerElement.appendChild(playerIframeEl);
           let player = new PeerTubePlayer(playerIframeEl);
+          seekPlusElement.onclick = async () => player.seek(videoPosition + 1);
+          pausePlayElement.onclick = async () => videoIsPlaying ? player.pause() : player.play();
+          seekMinusElement.onclick = async () => player.seek(videoPosition - 1);
 
           const selectLanguage = (languageId: string) => {
             const cues: any[] = [];
@@ -121,7 +131,7 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
               if (cue) {
                 selectCue(cue);
                 renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                vttResultElement.innerText = generateVTT(cues);
+                // vttResultElement.innerText = generateVTT(cues);
               }
             };
             cueInsertCueElement.onclick = () => {
@@ -129,7 +139,7 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
               cues.push(cue);
               selectCue(cue);
               renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-              vttResultElement.innerText = generateVTT(cues);
+              // vttResultElement.innerText = generateVTT(cues);
             };
 
 
@@ -143,14 +153,14 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
                   if (el.checked) {
                     cue.align = el.value;
                     renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                    vttResultElement.innerText = generateVTT(cues);
+                    // vttResultElement.innerText = generateVTT(cues);
                   }
                 };
 
                 cueInputElement.onkeyup = () => {
                   cue.text = cueInputElement.value;
                   renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                  vttResultElement.innerText = generateVTT(cues);
+                  // vttResultElement.innerText = generateVTT(cues);
                 };
               });
 
@@ -158,12 +168,12 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
                 console.log(videoPosition, cue, cues)
                 cue.startTime = videoPosition;
                 renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                vttResultElement.innerText = generateVTT(cues);
+                // vttResultElement.innerText = generateVTT(cues);
               };
               cueSetEndElement.onclick = () => {
                 cue.endTime = videoPosition;
                 renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                vttResultElement.innerText = generateVTT(cues);
+                // vttResultElement.innerText = generateVTT(cues);
               };
 
               renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
@@ -172,18 +182,22 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
             if (playerStatusEventListener) {
               player.removeEventListener("playbackStatusUpdate", playerStatusEventListener);
             }
-            playerStatusEventListener = player.addEventListener("playbackStatusUpdate", ({ position }: { position: number }) => {
-              if (position != videoPosition) {
-                timestampElement.innerText = formatTime(position);
+            playerStatusEventListener = player.addEventListener(
+              "playbackStatusUpdate",
+              ({ position, playbackState }: { position: number, playbackState: string }) => {
+                if (position != videoPosition) {
+                  videoPosition = position;
+                  videoIsPlaying = playbackState == "playing";
 
-                renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
-                videoPosition = position;
+                  timestampElement.innerText = formatTime(position);
 
+                  renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
+                }
               }
-            });
+            );
 
             renderCueTable(cuesElement, cues, { onCueSelected: (cue => selectCue(cue)) });
-            vttResultElement.innerText = generateVTT(cues);
+            // vttResultElement.innerText = generateVTT(cues);
             // await fetch(`/api/v1/videos/${parameters.id}/captions/da`, { method: "PUT" })
             // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
           };
