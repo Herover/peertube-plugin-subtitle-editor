@@ -4,10 +4,7 @@ export const renderBasics = (parent: Element) => {
   parent.innerHTML = `
     <div class="margin-content row">
       <div class="col-md-12">
-        <div id="subtitle-languages">
-          <button class="btn btn-primary">dk</button>
-          <button class="btn">en</button>
-        </div>
+        <div id="subtitle-languages"></div>
       </div>
     </div>
     <div class="margin-content row">
@@ -23,9 +20,9 @@ export const renderBasics = (parent: Element) => {
         <div class="subtitle-editor">
           <div id="subtitle-video-viewer"></div>
           <div id="subtitle-video-controls">
-            <button class="btn btn-light">-1s</button>
-            <button class="btn btn-light">Pause/play</button>
-            <button class="btn btn-light">+1s</button>
+            <button id="subtitle-seek-plus-1" class="btn btn-light">-1s</button>
+            <button id="subtitle-pause-play" class="btn btn-light">Pause/play</button>
+            <button id="subtitle-seek-minus-1" class="btn btn-light">+1s</button>
             
             <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
             <button id="subtitle-select-current" class="btn btn-light">Select current</button>
@@ -46,6 +43,24 @@ export const renderBasics = (parent: Element) => {
       </div>
     </div>
   `;
+};
+
+export const renderLanguageSelector = (
+  element: HTMLDivElement,
+  languages: { id: string, label: string }[],
+  currentLangId: string,
+  onSelected: (id: string) => any,
+) => {
+  element.innerHTML = "";
+
+  languages.forEach((lang) => {
+    const btn = document.createElement("button");
+    btn.classList.add("btn");
+    if (lang.id == currentLangId) btn.classList.add("btn-primary");
+    btn.innerText = lang.label;
+    btn.onclick = () => onSelected(lang.id);
+    element.appendChild(btn);
+  });
 };
 
 interface RenderTableOpts {
