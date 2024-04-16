@@ -1,13 +1,17 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { renderBasics, renderCueTable, renderLanguageSelector } from './render';
+import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector } from './render';
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
 
 const newCueLength = 5;
 
-async function register ({ peertubeHelpers, registerHook, registerClientRoute }: RegisterClientOptions): Promise<void> {
+async function register ({
+  peertubeHelpers,
+  registerHook,
+  registerClientRoute,
+}: RegisterClientOptions): Promise<void> {
   // const message = await peertubeHelpers.translate('Hello world')
 
   registerHook({
@@ -40,6 +44,7 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
       let videoIsPlaying = false;
       let currentCaptionLanguageId = "";
       let playerStatusEventListener: any;
+      let cues: any[] = [];
 
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
@@ -55,6 +60,9 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
       const seekPlusElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-seek-plus-1");
       const pausePlayElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-pause-play");
       const seekMinusElement = rootEl.querySelector<HTMLDivElement>("#subtitle-seek-minus-1");
+      const addNewLanguageListElement = rootEl.querySelector<HTMLSelectElement>("#subtitle-add-language-list");
+      const addNewLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-add");
+      const saveCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-save");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -70,11 +78,23 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
         || !cueSelectCurrentCueElement
         || !timestampElement
         || !languageListElement
+        || !addNewLanguageListElement
+        || !addNewLanguageElement
+        || !saveCurrentLanguageElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff")
 
         return;
       }
+
+      const languagesRequest = await fetch("/api/v1/videos/languages");
+      const languages: { [id: string]: string } = await languagesRequest.json();
+      renderLanguageList(
+        addNewLanguageListElement,
+        Object.keys(languages)
+          .map(id => ({ id, label: languages[id] }))
+          .sort((a, b) => a.label.localeCompare(b.label)),
+      );
 
       const [_, query] = location.href.split('?')
       if (query) {
@@ -117,7 +137,8 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
           seekMinusElement.onclick = async () => player.seek(videoPosition - 1);
 
           const selectLanguage = (languageId: string) => {
-            const cues: any[] = [];
+            currentCaptionLanguageId = languageId;
+            cues = [];
             const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
             vttParser.oncue = function(cue: any) {
               cues.push(cue);
@@ -198,15 +219,38 @@ async function register ({ peertubeHelpers, registerHook, registerClientRoute }:
 
             renderCueTable(cuesElement, cues, { onCueSelected: (cue => selectCue(cue)) });
             // vttResultElement.innerText = generateVTT(cues);
-            // await fetch(`/api/v1/videos/${parameters.id}/captions/da`, { method: "PUT" })
-            // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
           };
 
           if (!currentCaptionLanguageId && captions.data.length != 0) {
             currentCaptionLanguageId = captions.data[0].language.id;
             selectLanguage(currentCaptionLanguageId);
           }
-          renderLanguageSelector(languageListElement, captions.data.map(e => e.language), currentCaptionLanguageId, selectLanguage);
+          renderLanguageSelector(
+            languageListElement,
+            captions.data.map(e => e.language),
+            currentCaptionLanguageId,
+            selectLanguage,
+          );
+
+          saveCurrentLanguageElement.onclick = async () => {
+            if (currentCaptionLanguageId) {
+              let formData = new FormData();
+              formData.append('captionfile', new Blob(generateVTT(cues).split("")), currentCaptionLanguageId + ".vtt");
+              await fetch(
+                `/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`,
+                {
+                  method: "PUT",
+                  body: formData,
+                  credentials: 'include', 
+                  withCredentials: true,
+                  headers: {
+                    "authorization": "Bearer " + localStorage.getItem("access_token") || "",
+                  },
+                } as any,
+              );
+              // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
+            }
+          };
         } else {
           main.innerHTML = 'no video id'
         }

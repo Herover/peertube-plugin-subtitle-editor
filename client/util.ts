@@ -9,6 +9,6 @@ export const formatTime = (stamp: number) => {
     + ("" + minutes).padStart(2, "0")
     + ":"
     + ("" + seconds).padStart(2, "0")
-    + ":"
+    + "."
     + ("" + miliseconds).padStart(3, "0");
 };

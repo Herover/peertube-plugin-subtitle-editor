@@ -5,6 +5,9 @@ export const renderBasics = (parent: Element) => {
     <div class="margin-content row">
       <div class="col-md-12">
         <div id="subtitle-languages"></div>
+        <select id="subtitle-add-language-list"></select>
+        <button id="subtitle-add" class="btn btn-primary">+</button>
+        <button id="subtitle-save" class="btn btn-success">Save</button>
       </div>
     </div>
     <div class="margin-content row">
@@ -56,12 +59,21 @@ export const renderLanguageSelector = (
   languages.forEach((lang) => {
     const btn = document.createElement("button");
     btn.classList.add("btn");
-    if (lang.id == currentLangId) btn.classList.add("btn-primary");
+    btn.classList.add((lang.id == currentLangId) ? "btn-dark" : "btn-light");
     btn.innerText = lang.label;
     btn.onclick = () => onSelected(lang.id);
     element.appendChild(btn);
+    element.appendChild(document.createTextNode(" "));
   });
 };
+
+export const renderLanguageList = (element: HTMLSelectElement, languages: { id: string, label: string }[]) => {
+  languages.forEach(lang => {
+    const opt = document.createElement("option");
+    opt.innerText = lang.label;
+    element.appendChild(opt);
+  });
+}
 
 interface RenderTableOpts {
   time?: number;
@@ -115,21 +127,21 @@ export const renderCueTable = (table: Element, cues: any[], opts: RenderTableOpt
 };
 
 export const generateVTT = (cues: any[]) => {
-  let result = "WEBVTT FILE\n\n";
+  let result = "WEBVTT FILE\r\n\r\n";
 
   cues.forEach(cue => {
     if (cue.id) {
-      result += cue.id + "\n";
+      result += cue.id + "\r\n";
     }
 
     result += `${formatTime(cue.startTime)} --> ${formatTime(cue.endTime)}`;
     if (cue.align != "center") {
       result += " align:" + cue.align;
     }
-    result += "\n";
+    result += "\r\n";
 
     result += cue.text;
-    result += "\n\n";
+    result += "\r\n\r\n";
   });
 
   return result;
