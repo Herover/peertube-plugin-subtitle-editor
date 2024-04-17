@@ -69,10 +69,14 @@ export const renderLanguageSelector = (
   });
 };
 
-export const renderLanguageList = (element: HTMLSelectElement, languages: { id: string, label: string }[]) => {
+export const renderLanguageList = (element: HTMLSelectElement, languages: { id: string, label: string, disabled: boolean }[]) => {
   languages.forEach(lang => {
     const opt = document.createElement("option");
     opt.innerText = lang.label;
+    opt.value = lang.id;
+    if (lang.disabled) {
+      opt.setAttribute("disabled", "disabled");
+    }
     element.appendChild(opt);
   });
 }

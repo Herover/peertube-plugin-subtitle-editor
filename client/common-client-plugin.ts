@@ -127,6 +127,13 @@ async function register ({
               return cues;
             }))
           })));
+
+          const languages: { [id: string]: string } = await languagesRequest.json();
+          renderLanguageList(
+            addNewLanguageListElement,
+            Object.keys(languages)
+              .map(id => ({ id, label: languages[id], disabled: captionList.findIndex(c => c.id == id) != -1 }))
+              .sort((a, b) => a.label.localeCompare(b.label)),
           );
           
           const videoData: VideoDetails = await videoDataRequest.json();
