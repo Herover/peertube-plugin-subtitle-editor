@@ -7,6 +7,20 @@ import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-mo
 
 const newCueLength = 5;
 
+const getVTTDataFromUrl = async (url: string) => {
+  return await fetch(url).then(d => d.text()).then(data => {
+    let cues: any[] = [];
+    const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
+    vttParser.oncue = (cue: any) => {
+      cues.push(cue);
+    };
+    vttParser.parse(data);
+    vttParser.flush();
+
+    return { cues };
+  });
+};
+
 async function register ({
   peertubeHelpers,
   registerHook,
@@ -61,7 +75,9 @@ async function register ({
       const seekMinusElement = rootEl.querySelector<HTMLDivElement>("#subtitle-seek-minus-1");
       const addNewLanguageListElement = rootEl.querySelector<HTMLSelectElement>("#subtitle-add-language-list");
       const addNewLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-add");
+      const addCopyLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-add-copy");
       const saveCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-save");
+      const deleteCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -79,9 +95,12 @@ async function register ({
         || !languageListElement
         || !addNewLanguageListElement
         || !addNewLanguageElement
+        || !addCopyLanguageElement
         || !saveCurrentLanguageElement
+        || !deleteCurrentLanguageElement
         || !vttResultElement) {
-        console.warn("unable to render missing stuff")
+        console.warn("unable to render missing stuff");
+        alert("Something didn't load properly");
 
         return;
       }
@@ -110,22 +129,12 @@ async function register ({
           }
 
           const captions: { data: VideoCaption[] } = await captionsRequest.json();
-          const captionList = await Promise.all(captions.data.map(async c => ({
+          let captionList = await Promise.all(captions.data.map(async c => ({
             id: c.language.id,
             label: c.language.label,
             url: c.captionPath,
             changed: false,
-            cues: (await fetch(c.captionPath).then(d => d.text()).then(data => {
-              let cues: any[] = [];
-              const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
-              vttParser.oncue = function(cue: any) {
-                cues.push(cue);
-              };
-              vttParser.parse(data);
-              vttParser.flush();
-
-              return cues;
-            }))
+            cues: (await getVTTDataFromUrl(c.captionPath)).cues,
           })));
 
           const languages: { [id: string]: string } = await languagesRequest.json();
@@ -310,7 +319,6 @@ async function register ({
           );
 
           addNewLanguageElement.onclick = () => {
-            console.log("adding", addNewLanguageListElement.value);
             captionList.push({
               changed: true,
               id: addNewLanguageListElement.value,
@@ -318,7 +326,54 @@ async function register ({
               url: "",
               cues: [],
             });
-            selectLanguage(addNewLanguageListElement.value)
+            selectLanguage(addNewLanguageListElement.value);
+          };
+
+          addCopyLanguageElement.onclick = async () => {
+            const existing = captionList.find(e => e.id == addNewLanguageListElement.value);
+            if (existing) {
+              captionList.push({
+                changed: true,
+                id: addNewLanguageListElement.value,
+                label: languages[addNewLanguageListElement.value],
+                url: "",
+                cues: (await getVTTDataFromUrl(existing.url)).cues,
+              });
+              selectLanguage(addNewLanguageListElement.value);
+            }
+          };
+
+          deleteCurrentLanguageElement.onclick = () => {
+            if (currentCaptionLanguageId) {
+              peertubeHelpers.showModal({
+                title: "Delete?",
+                content: `Confirm that you want to delete ${currentCaptionLanguageId}`,
+                cancel: {
+                  value: "Cancel",
+                },
+                confirm: {
+                  value: "Delete",
+                  action: async () => {
+                    const res = await fetch(`/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`, {
+                      method: "DELETE",
+                      credentials: 'include',
+                      headers: {
+                        "authorization": "Bearer " + localStorage.getItem("access_token") || "",
+                      },
+                    });
+                    
+                    if (res.status == 204) {
+                      captionList = captionList.filter(e => e.id != currentCaptionLanguageId);
+                      if (captionList.length != 0) {
+                        selectLanguage(captionList[0].id);
+                      }
+                    } else {
+                      alert("Could not delete");
+                    }
+                  },
+                },
+              });
+            }
           };
         } else {
           main.innerHTML = 'no video id'

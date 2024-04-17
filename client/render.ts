@@ -4,10 +4,14 @@ export const renderBasics = (parent: Element) => {
   parent.innerHTML = `
     <div class="margin-content row subtitle-main">
       <div class="col-md-12">
-        <div id="subtitle-languages"></div>
-        <div id="subtitle-language-actions">
+        <div id="subtitle-languages" class="action-bubble"></div>
+        <div class="action-bubble">
           <select id="subtitle-add-language-list"></select>
-          <button id="subtitle-add" class="btn btn-primary">+</button>
+          <button id="subtitle-add" class="btn btn-primary">+ new</button>
+          <button id="subtitle-add-copy" class="btn btn-primary">+ copy to new</button>
+        </div>
+        <div class="action-bubble">
+          <button id="subtitle-delete" class="btn btn-danger">Delete</button>
           <button id="subtitle-save" class="btn btn-success">Save</button>
         </div>
       </div>
