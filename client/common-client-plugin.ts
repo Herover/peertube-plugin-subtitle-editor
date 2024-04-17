@@ -57,7 +57,8 @@ async function register ({
       let videoPosition = 0;
       let videoIsPlaying = false;
       let currentCaptionLanguageId = "";
-      let playerStatusEventListener: any;
+      // Contains current player status fn, must be kept around so we can remove it later
+      let playerStatusCallback: any;
 
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
@@ -257,21 +258,22 @@ async function register ({
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
             };
 
-            if (playerStatusEventListener) {
-              player.removeEventListener("playbackStatusUpdate", playerStatusEventListener);
+            if (playerStatusCallback) {
+              player.removeEventListener("playbackStatusUpdate", playerStatusCallback);
             }
-            playerStatusEventListener = player.addEventListener(
-              "playbackStatusUpdate",
-              ({ position, playbackState }: { position: number, playbackState: string }) => {
-                if (position != videoPosition) {
-                  videoPosition = position;
-                  videoIsPlaying = playbackState == "playing";
+            playerStatusCallback = ({ position, playbackState }: { position: number, playbackState: string }) => {
+              if (position != videoPosition) {
+                videoPosition = position;
+                videoIsPlaying = playbackState == "playing";
 
-                  timestampElement.innerText = formatTime(position);
+                timestampElement.innerText = formatTime(position);
 
-                  renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
-                }
+                renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
               }
+            };
+            player.addEventListener(
+              "playbackStatusUpdate",
+              playerStatusCallback
             );
 
             saveCurrentLanguageElement.onclick = async () => {
