@@ -44,7 +44,6 @@ async function register ({
       let videoIsPlaying = false;
       let currentCaptionLanguageId = "";
       let playerStatusEventListener: any;
-      let cues: any[] = [];
 
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
@@ -87,15 +86,6 @@ async function register ({
         return;
       }
 
-      const languagesRequest = await fetch("/api/v1/videos/languages");
-      const languages: { [id: string]: string } = await languagesRequest.json();
-      renderLanguageList(
-        addNewLanguageListElement,
-        Object.keys(languages)
-          .map(id => ({ id, label: languages[id] }))
-          .sort((a, b) => a.label.localeCompare(b.label)),
-      );
-
       const [_, query] = location.href.split('?')
       if (query) {
         const parameters = query.split('&').map(p => p.split('=')).reduce((acc, [k, v]) => {
@@ -104,9 +94,14 @@ async function register ({
         }, {} as {[key: string]: string})
 
         if (parameters.id) {
-          const [videoDataRequest, captionsRequest] = await Promise.all([
+          const [
+            videoDataRequest,
+            captionsRequest,
+            languagesRequest,
+          ] = await Promise.all([
             fetch(`/api/v1/videos/${parameters.id}`),
             fetch(`/api/v1/videos/${parameters.id}/captions`),
+            fetch("/api/v1/videos/languages"),
           ]);
 
           if (captionsRequest.status !== 200 || videoDataRequest.status !== 200) {
@@ -115,9 +110,23 @@ async function register ({
           }
 
           const captions: { data: VideoCaption[] } = await captionsRequest.json();
-          const captionFiles = await Promise.all(
-            captions.data
-              .map((d) => fetch(d.captionPath).then(d => d.text()).then(e => e))
+          const captionList = await Promise.all(captions.data.map(async c => ({
+            id: c.language.id,
+            label: c.language.label,
+            url: c.captionPath,
+            changed: false,
+            cues: (await fetch(c.captionPath).then(d => d.text()).then(data => {
+              let cues: any[] = [];
+              const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
+              vttParser.oncue = function(cue: any) {
+                cues.push(cue);
+              };
+              vttParser.parse(data);
+              vttParser.flush();
+
+              return cues;
+            }))
+          })));
           );
           
           const videoData: VideoDetails = await videoDataRequest.json();
@@ -138,28 +147,32 @@ async function register ({
 
           const selectLanguage = (languageId: string) => {
             currentCaptionLanguageId = languageId;
-            cues = [];
-            const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
-            vttParser.oncue = function(cue: any) {
-              cues.push(cue);
-            };
-            vttParser.parse(captionFiles[captions.data.findIndex(c => c.language.id == languageId)]);
-            vttParser.flush();
-            console.log(cues);
+            const captionData = captionList.find(e => e.id == currentCaptionLanguageId);
+            if (!captionData) {
+              alert("Could not find captions that was expected to be here: " + currentCaptionLanguageId);
+              return;
+            }
+
+            renderLanguageSelector(
+              languageListElement,
+              captionList,
+              currentCaptionLanguageId,
+              selectLanguage,
+            );
 
             cueSelectCurrentCueElement.onclick = () => {
-              const cue = cues.find(c => c.startTime < videoPosition && videoPosition < c.endTime);
+              const cue = captionData.cues.find(c => c.startTime < videoPosition && videoPosition < c.endTime);
               if (cue) {
                 selectCue(cue);
-                renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                 // vttResultElement.innerText = generateVTT(cues);
               }
             };
             cueInsertCueElement.onclick = () => {
               const cue = new VTTCue(videoPosition, videoPosition + newCueLength, "");
-              cues.push(cue);
+              captionData.cues.push(cue);
               selectCue(cue);
-              renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+              renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
               // vttResultElement.innerText = generateVTT(cues);
             };
 
@@ -173,31 +186,31 @@ async function register ({
                 el.onclick = () => {
                   if (el.checked) {
                     cue.align = el.value;
-                    renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                    renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                     // vttResultElement.innerText = generateVTT(cues);
                   }
                 };
 
                 cueInputElement.onkeyup = () => {
                   cue.text = cueInputElement.value;
-                  renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                  renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                   // vttResultElement.innerText = generateVTT(cues);
                 };
               });
 
               cueSetStartElement.onclick = () => {
-                console.log(videoPosition, cue, cues)
+                console.log(videoPosition, cue, captionData.cues)
                 cue.startTime = videoPosition;
-                renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                 // vttResultElement.innerText = generateVTT(cues);
               };
               cueSetEndElement.onclick = () => {
                 cue.endTime = videoPosition;
-                renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                 // vttResultElement.innerText = generateVTT(cues);
               };
 
-              renderCueTable(cuesElement, cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+              renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
             };
 
             if (playerStatusEventListener) {
@@ -212,12 +225,34 @@ async function register ({
 
                   timestampElement.innerText = formatTime(position);
 
-                  renderCueTable(cuesElement, cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
+                  renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
                 }
               }
             );
 
-            renderCueTable(cuesElement, cues, { onCueSelected: (cue => selectCue(cue)) });
+            saveCurrentLanguageElement.onclick = async () => {
+              if (currentCaptionLanguageId) {
+                let formData = new FormData();
+                formData.append('captionfile', new Blob(generateVTT(captionData.cues).split("")), currentCaptionLanguageId + ".vtt");
+                await fetch(
+                  `/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`,
+                  {
+                    method: "PUT",
+                    body: formData,
+                    credentials: 'include', 
+                  credentials: 'include', 
+                    credentials: 'include', 
+                    withCredentials: true,
+                    headers: {
+                      "authorization": "Bearer " + localStorage.getItem("access_token") || "",
+                    },
+                  } as any,
+                );
+                // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
+              }
+            };
+
+            renderCueTable(cuesElement, captionData.cues, { onCueSelected: (cue => selectCue(cue)) });
             // vttResultElement.innerText = generateVTT(cues);
           };
 
@@ -227,29 +262,21 @@ async function register ({
           }
           renderLanguageSelector(
             languageListElement,
-            captions.data.map(e => e.language),
+            captionList,
             currentCaptionLanguageId,
             selectLanguage,
           );
 
-          saveCurrentLanguageElement.onclick = async () => {
-            if (currentCaptionLanguageId) {
-              let formData = new FormData();
-              formData.append('captionfile', new Blob(generateVTT(cues).split("")), currentCaptionLanguageId + ".vtt");
-              await fetch(
-                `/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`,
-                {
-                  method: "PUT",
-                  body: formData,
-                  credentials: 'include', 
-                  withCredentials: true,
-                  headers: {
-                    "authorization": "Bearer " + localStorage.getItem("access_token") || "",
-                  },
-                } as any,
-              );
-              // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
-            }
+          addNewLanguageElement.onclick = () => {
+            console.log("adding", addNewLanguageListElement.value);
+            captionList.push({
+              changed: true,
+              id: addNewLanguageListElement.value,
+              label: languages[addNewLanguageListElement.value],
+              url: "",
+              cues: [],
+            });
+            selectLanguage(addNewLanguageListElement.value)
           };
         } else {
           main.innerHTML = 'no video id'

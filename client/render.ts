@@ -5,9 +5,11 @@ export const renderBasics = (parent: Element) => {
     <div class="margin-content row">
       <div class="col-md-12">
         <div id="subtitle-languages"></div>
-        <select id="subtitle-add-language-list"></select>
-        <button id="subtitle-add" class="btn btn-primary">+</button>
-        <button id="subtitle-save" class="btn btn-success">Save</button>
+        <div id="subtitle-language-actions">
+          <select id="subtitle-add-language-list"></select>
+          <button id="subtitle-add" class="btn btn-primary">+</button>
+          <button id="subtitle-save" class="btn btn-success">Save</button>
+        </div>
       </div>
     </div>
     <div class="margin-content row">
