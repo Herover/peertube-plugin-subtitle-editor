@@ -1,3 +1,15 @@
+# PeerTube Subtitle Editor
+
+Edit captions directly in PeerTube! Installing this plugin will add a button to your PeerTube instances video settings (the page you see when you publish or update a video) that will take you to the following screen:
+
+![Screenshot showing a video being edited in English.](/screenshot-1.png "Editor")
+
+Adding subtitles to your videos allows deaf viewers and people unable to play your video with sound on to get a understanding of what's being said. It also allows PeerTube to include your content when someone searches for a language that you have subtitles for, even if the spoken language is something else.
+
+However, it can be a struggle to write captions if you first have to find, install and learn new software. The goal if this project is to remove at least the first two hurdles.
+
+The project is still fairly new, not tested by many, and lacks features found in many dedicated apps for writing subtitles. Please report bugs and send feature requests to the [Codeberg repository](https://codeberg.org/herover/peertube-plugin-subtitle-editor/issues) or alternatively to [GitHub](https://github.com/Herover/peertube-plugin-subtitle-editor). General feedback is also welcome through Mastodon.
+
 # PeerTube plugin Quickstart Typescript
 
 This is a fork of [peertube-plugin-quickstart](https://framagit.org/framasoft/peertube/peertube-plugin-quickstart)
