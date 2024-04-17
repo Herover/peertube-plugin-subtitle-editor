@@ -193,14 +193,28 @@ async function register ({
                 el.onclick = () => {
                   if (el.checked) {
                     cue.align = el.value;
+                    captionData.changed = true;
                     renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                    renderLanguageSelector(
+                      languageListElement,
+                      captionList,
+                      currentCaptionLanguageId,
+                      selectLanguage,
+                    );
                     // vttResultElement.innerText = generateVTT(cues);
                   }
                 };
 
                 cueInputElement.onkeyup = () => {
                   cue.text = cueInputElement.value;
+                  captionData.changed = true;
                   renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                  renderLanguageSelector(
+                    languageListElement,
+                    captionList,
+                    currentCaptionLanguageId,
+                    selectLanguage,
+                  );
                   // vttResultElement.innerText = generateVTT(cues);
                 };
               });
@@ -208,12 +222,26 @@ async function register ({
               cueSetStartElement.onclick = () => {
                 console.log(videoPosition, cue, captionData.cues)
                 cue.startTime = videoPosition;
+                captionData.changed = true;
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderLanguageSelector(
+                  languageListElement,
+                  captionList,
+                  currentCaptionLanguageId,
+                  selectLanguage,
+                );
                 // vttResultElement.innerText = generateVTT(cues);
               };
               cueSetEndElement.onclick = () => {
                 cue.endTime = videoPosition;
+                captionData.changed = true;
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderLanguageSelector(
+                  languageListElement,
+                  captionList,
+                  currentCaptionLanguageId,
+                  selectLanguage,
+                );
                 // vttResultElement.innerText = generateVTT(cues);
               };
 
@@ -241,13 +269,11 @@ async function register ({
               if (currentCaptionLanguageId) {
                 let formData = new FormData();
                 formData.append('captionfile', new Blob(generateVTT(captionData.cues).split("")), currentCaptionLanguageId + ".vtt");
-                await fetch(
+                const res = await fetch(
                   `/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`,
                   {
                     method: "PUT",
                     body: formData,
-                    credentials: 'include', 
-                  credentials: 'include', 
                     credentials: 'include', 
                     withCredentials: true,
                     headers: {
@@ -255,6 +281,15 @@ async function register ({
                     },
                   } as any,
                 );
+                if (res.status == 204) {
+                  captionData.changed = false;
+                  renderLanguageSelector(
+                    languageListElement,
+                    captionList,
+                    currentCaptionLanguageId,
+                    selectLanguage,
+                  );
+                }
                 // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
               }
             };

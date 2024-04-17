@@ -2,7 +2,7 @@ import { formatTime } from "./util";
 
 export const renderBasics = (parent: Element) => {
   parent.innerHTML = `
-    <div class="margin-content row">
+    <div class="margin-content row subtitle-main">
       <div class="col-md-12">
         <div id="subtitle-languages"></div>
         <div id="subtitle-language-actions">
@@ -52,7 +52,7 @@ export const renderBasics = (parent: Element) => {
 
 export const renderLanguageSelector = (
   element: HTMLDivElement,
-  languages: { id: string, label: string }[],
+  languages: { id: string, label: string, changed: boolean }[],
   currentLangId: string,
   onSelected: (id: string) => any,
 ) => {
@@ -63,6 +63,9 @@ export const renderLanguageSelector = (
     btn.classList.add("btn");
     btn.classList.add((lang.id == currentLangId) ? "btn-dark" : "btn-light");
     btn.innerText = lang.label;
+    if (lang.changed) {
+      btn.innerText += " (unsaved)";
+    }
     btn.onclick = () => onSelected(lang.id);
     element.appendChild(btn);
     element.appendChild(document.createTextNode(" "));
