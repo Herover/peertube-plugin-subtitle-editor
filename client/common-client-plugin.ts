@@ -1,7 +1,7 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector } from './render';
+import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderTimeline } from './render';
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
 
@@ -79,6 +79,7 @@ async function register ({
       const addCopyLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-add-copy");
       const saveCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-save");
       const deleteCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete");
+      const timelineElement = rootEl.querySelector<HTMLCanvasElement>("#subtitle-timeline");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -99,6 +100,7 @@ async function register ({
         || !addCopyLanguageElement
         || !saveCurrentLanguageElement
         || !deleteCurrentLanguageElement
+        || !timelineElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff");
         alert("Something didn't load properly");
@@ -137,6 +139,8 @@ async function register ({
             changed: false,
             cues: (await getVTTDataFromUrl(c.captionPath)).cues,
           })));
+
+          let timelineContext = timelineElement.getContext("2d");
 
           const languages: { [id: string]: string } = await languagesRequest.json();
           renderLanguageList(
@@ -261,7 +265,7 @@ async function register ({
             if (playerStatusCallback) {
               player.removeEventListener("playbackStatusUpdate", playerStatusCallback);
             }
-            playerStatusCallback = ({ position, playbackState }: { position: number, playbackState: string }) => {
+            playerStatusCallback = ({ position, playbackState, duration }: { position: number, playbackState: string, duration: string }) => {
               if (position != videoPosition) {
                 videoPosition = position;
                 videoIsPlaying = playbackState == "playing";
@@ -269,6 +273,26 @@ async function register ({
                 timestampElement.innerText = formatTime(position);
 
                 renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
+
+                timelineContext = timelineElement.getContext("2d");
+                const width = timelineElement.parentElement?.offsetWidth || 400;
+                const height = 200;
+                // Make it look good on retina displays, zoomed in browsers...
+                const scale = window.devicePixelRatio;
+                timelineElement.width = Math.floor(width * scale);
+                timelineElement.height = Math.floor(height * scale);
+                timelineElement.setAttribute("style", `width: ${width}px; height: ${height}px;`);
+                if (timelineContext) {
+                  timelineContext.scale(scale, scale);
+                  renderTimeline(
+                    timelineContext,
+                    captionData.cues,
+                    position,
+                    Number.parseInt(duration),
+                    width,
+                    height,
+                  );
+                }
               }
             };
             player.addEventListener(

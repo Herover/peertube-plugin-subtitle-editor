@@ -47,6 +47,7 @@ export const renderBasics = (parent: Element) => {
             <label>Center <input value="center" name="subtitle-align" type="radio"/></label>
             <label>Right <input value="right" name="subtitle-align" type="radio"/></label>
           </p>
+          <canvas id="subtitle-timeline" width=400 height=200 />
           <pre id="subtitle-vtt-result"></pre>
         </div>
       </div>
@@ -158,4 +159,62 @@ export const generateVTT = (cues: any[]) => {
   });
 
   return result;
+};
+
+export const renderTimeline = (
+  ctx: CanvasRenderingContext2D,
+  cues: any[],
+  time: number,
+  duration: number,
+  width: number,
+  height: number,
+) => {
+  const secondLength = 100;
+  ctx.font = "16px Arial";
+  ctx.moveTo(0, 0);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.strokeStyle = "#000000";
+  ctx.fillStyle = "#000000";
+
+  for (let i = 0; i < duration * 10; i += 1) {
+    let t = i/10;
+    const p = (t - time) * secondLength + (width/2);
+    if (p < width && 0 < p) {
+      ctx.beginPath();
+      ctx.moveTo(p, 20);
+      ctx.lineTo(p, t%1 == 0 ? 30 : 24);
+      ctx.stroke();
+    }
+  }
+  
+  for (let i = 0; i < duration; i ++) {
+    const p = (i - time) * secondLength + (width/2);
+    if (p < width && 0 < p) {
+      ctx.textAlign = "center";
+      // ctx.moveTo(p, 0);
+      ctx.fillText("" + i%60, p, 18);
+    }
+  }
+
+  for (let i = 0; i < cues.length; i++) {
+    const cue = cues[i];
+    const p1 = (cue.startTime - time) * secondLength + (width/2);
+    const p2 = (cue.endTime - time) * secondLength + (width/2);
+    if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width/2 && width/2 < p2)) {
+      ctx.fillStyle = "#cccccc";
+      ctx.fillRect(p1, 30, p2 - p1, 50);
+      // ctx.stroke();
+      // ctx.fill();
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "left";
+      ctx.fillText(cue.text, p1, 50);
+    }
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(width/2, 0);
+  ctx.lineTo(width/2, height);
+  ctx.stroke();
 };
