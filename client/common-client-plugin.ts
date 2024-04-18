@@ -361,16 +361,18 @@ async function register ({
                       timelineElement.style.cursor = "ew-resize";
                     }
                   } else {
-                    timelineElement.style.cursor = "initial";
+                    timelineElement.style.cursor = "grab";
                   }
 
                   if (mouseDown) {
                     if (mouseDown?.box?.type == "cueEnd") {
                       mouseDown.box.cue.endTime += e.movementX/timelineSecondLength;
-                    };
-                    if (mouseDown?.box?.type == "cueStart") {
+                    } else if (mouseDown?.box?.type == "cueStart") {
                       mouseDown.box.cue.startTime += e.movementX/timelineSecondLength;
-                    };
+                    } else if(!mouseDown.box) {
+                      videoPosition -= e.movementX/timelineSecondLength;
+                      player.seek(videoPosition);
+                    }
                   }
                 }
                 timelineElement.onmousedown = (e) => {
