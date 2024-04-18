@@ -161,6 +161,15 @@ export const generateVTT = (cues: any[]) => {
   return result;
 };
 
+export interface TimelineClickBox {
+  type: "cue" | "cueStart" | "cueEnd",
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cue: any,
+};
+export const timelineSecondLength = 100;
 export const renderTimeline = (
   ctx: CanvasRenderingContext2D,
   cues: any[],
@@ -169,7 +178,12 @@ export const renderTimeline = (
   width: number,
   height: number,
 ) => {
-  const secondLength = 100;
+  const clickBoxes: TimelineClickBox[] = [];
+  const dragRadius = 8;
+  const cueY1 = 30;
+  const cueY2 = 50;
+  // const cueHeight = 20;
+
   ctx.font = "16px Arial";
   ctx.moveTo(0, 0);
   ctx.fillStyle = "#ffffff";
@@ -179,42 +193,69 @@ export const renderTimeline = (
   ctx.fillStyle = "#000000";
 
   for (let i = 0; i < duration * 10; i += 1) {
-    let t = i/10;
-    const p = (t - time) * secondLength + (width/2);
+    let t = i / 10;
+    const p = (t - time) * timelineSecondLength + (width / 2);
     if (p < width && 0 < p) {
       ctx.beginPath();
       ctx.moveTo(p, 20);
-      ctx.lineTo(p, t%1 == 0 ? 30 : 24);
+      ctx.lineTo(p, t % 1 == 0 ? 30 : 24);
       ctx.stroke();
     }
   }
-  
-  for (let i = 0; i < duration; i ++) {
-    const p = (i - time) * secondLength + (width/2);
+
+  for (let i = 0; i < duration; i++) {
+    const p = (i - time) * timelineSecondLength + (width / 2);
     if (p < width && 0 < p) {
       ctx.textAlign = "center";
       // ctx.moveTo(p, 0);
-      ctx.fillText("" + i%60, p, 18);
+      ctx.fillText("" + i % 60, p, 18);
     }
   }
 
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
-    const p1 = (cue.startTime - time) * secondLength + (width/2);
-    const p2 = (cue.endTime - time) * secondLength + (width/2);
-    if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width/2 && width/2 < p2)) {
+    const p1 = (cue.startTime - time) * timelineSecondLength + (width / 2);
+    const p2 = (cue.endTime - time) * timelineSecondLength + (width / 2);
+    if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width / 2 && width / 2 < p2)) {
       ctx.fillStyle = "#cccccc";
-      ctx.fillRect(p1, 30, p2 - p1, 50);
+      ctx.fillRect(p1, cueY1, p2 - p1, cueY2 - cueY1);
       // ctx.stroke();
       // ctx.fill();
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-      ctx.fillText(cue.text, p1, 50);
+      ctx.fillText(cue.text, p1, cueY2);
+
+      clickBoxes.push({
+        type: "cueStart",
+        x1: p1 - dragRadius,
+        y1: cueY1,
+        x2: p1 + dragRadius,
+        y2: cueY2,
+        cue,
+      });
+      clickBoxes.push({
+        type: "cueEnd",
+        x1: p2 - dragRadius,
+        y1: cueY1,
+        x2: p2 + dragRadius,
+        y2: cueY2,
+        cue,
+      });
+      clickBoxes.push({
+        type: "cue",
+        x1: p1,
+        y1: cueY1,
+        x2: p2,
+        y2: cueY2,
+        cue,
+      });
     }
   }
 
   ctx.beginPath();
-  ctx.moveTo(width/2, 0);
-  ctx.lineTo(width/2, height);
+  ctx.moveTo(width / 2, 0);
+  ctx.lineTo(width / 2, height);
   ctx.stroke();
+
+  return clickBoxes;
 };

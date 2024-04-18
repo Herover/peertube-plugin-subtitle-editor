@@ -1,7 +1,7 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderTimeline } from './render';
+import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderTimeline, TimelineClickBox, timelineSecondLength } from './render';
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
 
@@ -55,6 +55,7 @@ async function register ({
       rootEl.appendChild(main);
       
       let videoPosition = 0;
+      let videoDuration = 1;
       let videoIsPlaying = false;
       let currentCaptionLanguageId = "";
       // Contains current player status fn, must be kept around so we can remove it later
@@ -269,30 +270,11 @@ async function register ({
               if (position != videoPosition) {
                 videoPosition = position;
                 videoIsPlaying = playbackState == "playing";
+                videoDuration = Number.parseInt(duration);
 
                 timestampElement.innerText = formatTime(position);
 
                 renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
-
-                timelineContext = timelineElement.getContext("2d");
-                const width = timelineElement.parentElement?.offsetWidth || 400;
-                const height = 200;
-                // Make it look good on retina displays, zoomed in browsers...
-                const scale = window.devicePixelRatio;
-                timelineElement.width = Math.floor(width * scale);
-                timelineElement.height = Math.floor(height * scale);
-                timelineElement.setAttribute("style", `width: ${width}px; height: ${height}px;`);
-                if (timelineContext) {
-                  timelineContext.scale(scale, scale);
-                  renderTimeline(
-                    timelineContext,
-                    captionData.cues,
-                    position,
-                    Number.parseInt(duration),
-                    width,
-                    height,
-                  );
-                }
               }
             };
             player.addEventListener(
@@ -328,6 +310,86 @@ async function register ({
                 // /lazy-static/video-captions/8569c190-8405-4e0e-a89e-fec0c0377f75-da.vtt
               }
             };
+
+            let mouseDown: { x: number, y: number, box?: TimelineClickBox } | null = null;
+            const updateTimeline = (d: number) => {
+              timelineContext = timelineElement.getContext("2d");
+              const width = timelineElement.parentElement?.offsetWidth || 400;
+              const height = 200;
+              // Make it look good on retina displays, zoomed in browsers...
+              const scale = window.devicePixelRatio;
+              timelineElement.width = Math.floor(width * scale);
+              timelineElement.height = Math.floor(height * scale);
+              timelineElement.style.width = width + "px";
+              timelineElement.style.height = height + "px";
+              if (timelineContext) {
+                timelineContext.scale(scale, scale);
+                const boxes = renderTimeline(
+                  timelineContext,
+                  captionData.cues,
+                  videoPosition,
+                  videoDuration,
+                  width,
+                  height,
+                );
+
+                const getBoxAtPosition = (e: MouseEvent) => {
+                  const rect = (e as any).target.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  return boxes.find(box => {
+                    if (box.x1 < x && x < box.x2 && box.y1 < y && y < box.y2) {
+                      return true;
+                    }
+    
+                    return false;
+                  });
+                }
+
+                timelineElement.onmousemove = (e) => {
+                  const box = getBoxAtPosition(e);
+                  if (box) {
+                    if (box.type == 'cue') {
+                      timelineElement.style.cursor = "pointer";
+                      timelineElement.onclick = () => selectCue(box.cue);
+                    }
+                    if (box.type == "cueStart") {
+                      timelineElement.style.cursor = "ew-resize";
+                      
+                    }
+                    if (box.type == "cueEnd") {
+                      timelineElement.style.cursor = "ew-resize";
+                    }
+                  } else {
+                    timelineElement.style.cursor = "initial";
+                  }
+
+                  if (mouseDown) {
+                    if (mouseDown?.box?.type == "cueEnd") {
+                      mouseDown.box.cue.endTime += e.movementX/timelineSecondLength;
+                    };
+                    if (mouseDown?.box?.type == "cueStart") {
+                      mouseDown.box.cue.startTime += e.movementX/timelineSecondLength;
+                    };
+                  }
+                }
+                timelineElement.onmousedown = (e) => {
+                  const rect = (e as any).target.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  const box = getBoxAtPosition(e);
+                  mouseDown = { x, y, box };
+                };
+                timelineElement.onmouseup = () => {
+                  mouseDown = null;
+                };
+              }
+
+              if (currentCaptionLanguageId == languageId) {
+                requestAnimationFrame(updateTimeline);
+              }
+            };
+            requestAnimationFrame(updateTimeline);
 
             renderCueTable(cuesElement, captionData.cues, { onCueSelected: (cue => selectCue(cue)) });
             // vttResultElement.innerText = generateVTT(cues);
