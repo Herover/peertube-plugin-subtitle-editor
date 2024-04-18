@@ -175,6 +175,8 @@ async function register ({
               return;
             }
 
+            cueInputElement.setAttribute("lang", languageId);
+
             renderLanguageSelector(
               languageListElement,
               captionList,
