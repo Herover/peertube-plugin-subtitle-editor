@@ -312,7 +312,13 @@ async function register ({
             };
 
             let mouseDown: { x: number, y: number, box?: TimelineClickBox } | null = null;
-            const updateTimeline = (d: number) => {
+            let lastTimelineRender = 0;
+            const updateTimeline = (t: number) => {
+              if (videoIsPlaying) {
+                videoPosition += (t-lastTimelineRender)/1000;
+                timestampElement.innerText = formatTime(videoPosition);
+              }
+              lastTimelineRender = t;
               timelineContext = timelineElement.getContext("2d");
               const width = timelineElement.parentElement?.offsetWidth || 400;
               const height = 200;
@@ -372,6 +378,7 @@ async function register ({
                     } else if(!mouseDown.box) {
                       videoPosition -= e.movementX/timelineSecondLength;
                       player.seek(videoPosition);
+                      timestampElement.innerText = formatTime(videoPosition);
                     }
                   }
                 }
