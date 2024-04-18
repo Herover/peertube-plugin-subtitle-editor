@@ -4,9 +4,9 @@ Edit captions directly in PeerTube! Installing this plugin will add a button to 
 
 ![Screenshot showing a video being edited in English.](/screenshot-1.png "Editor")
 
-Adding subtitles to your videos allows deaf viewers and people unable to play your video with sound on to get a understanding of what's being said. It also allows PeerTube to include your content when someone searches for a language that you have subtitles for, even if the spoken language is something else.
+Adding captions to your videos allows deaf viewers and people unable to play your video with sound on to get a understanding of what's being said. It also allows PeerTube to include your content when someone searches for a language that you have captions for, even if the spoken language is something else.
 
-However, it can be a struggle to write captions if you first have to find, install and learn new software. The goal if this project is to remove at least the first two hurdles.
+However, it can be a struggle to write captions if you first have to find, install and learn new software. The goal if this project is to remove at least the first two hurdles, and hopefully simplify the last.
 
 The project is still fairly new, not tested by many, and lacks features found in many dedicated apps for writing subtitles. Please report bugs and send feature requests to the [Codeberg repository](https://codeberg.org/herover/peertube-plugin-subtitle-editor/issues) or alternatively to [GitHub](https://github.com/Herover/peertube-plugin-subtitle-editor). General feedback is also welcome through Mastodon.
 
