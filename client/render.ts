@@ -179,7 +179,11 @@ export const renderTimeline = (
   const dragRadius = 8;
   const cueY1 = 30;
   const cueY2 = 50;
+  const cueBoxHeight = cueY2 - cueY1;
   // const cueHeight = 20;
+
+  // TODO: only calculate when cues change
+  let lanes: number[] = [];
 
   ctx.font = "16px Arial";
   ctx.moveTo(0, 0);
@@ -213,37 +217,46 @@ export const renderTimeline = (
     const cue = cues[i];
     const p1 = (cue.startTime - time) * timelineSecondLength + (width / 2);
     const p2 = (cue.endTime - time) * timelineSecondLength + (width / 2);
+
+    let lane = lanes.findIndex(end => end < cue.startTime);
+    if (lane == -1) {
+      lane = lanes.length;
+      lanes.push(cue.endTime);
+    }
+    lanes[lane] = cue.endTime;
+
     if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width / 2 && width / 2 < p2)) {
       ctx.fillStyle = "#cccccc";
-      ctx.fillRect(p1, cueY1, p2 - p1, cueY2 - cueY1);
+      const y = lane * (cueBoxHeight + 4) + cueY1
+      ctx.fillRect(p1, y, p2 - p1, cueBoxHeight);
       // ctx.stroke();
       // ctx.fill();
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-      ctx.fillText(cue.text, p1, cueY2);
+      ctx.fillText(cue.text, p1, y + cueBoxHeight);
 
       clickBoxes.push({
         type: "cueStart",
         x1: p1 - dragRadius,
-        y1: cueY1,
+        y1: y,
         x2: p1 + dragRadius,
-        y2: cueY2,
+        y2: y + cueBoxHeight,
         cue,
       });
       clickBoxes.push({
         type: "cueEnd",
         x1: p2 - dragRadius,
-        y1: cueY1,
+        y1: y,
         x2: p2 + dragRadius,
-        y2: cueY2,
+        y2: y + cueBoxHeight,
         cue,
       });
       clickBoxes.push({
         type: "cue",
         x1: p1,
-        y1: cueY1,
+        y1: y,
         x2: p2,
-        y2: cueY2,
+        y2: y + cueBoxHeight,
         cue,
       });
     }

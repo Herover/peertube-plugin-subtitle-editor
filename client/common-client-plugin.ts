@@ -206,6 +206,7 @@ async function register ({
             cueInsertCueElement.onclick = () => {
               const cue = new VTTCue(videoPosition, videoPosition + newCueLength, "");
               captionData.cues.push(cue);
+              captionData.cues.sort((a, b) => a.startTime - b.startTime);
               selectCue(cue);
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
               // vttResultElement.innerText = generateVTT(cues);
@@ -227,6 +228,19 @@ async function register ({
               deleteCueElement.disabled = false;
 
               cueInputElement.value = cue.text;
+
+              cueInputElement.onkeyup = () => {
+                cue.text = cueInputElement.value;
+                captionData.changed = true;
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                renderLanguageSelector(
+                  languageListElement,
+                  captionList,
+                  currentCaptionLanguageId,
+                  selectLanguage,
+                );
+                // vttResultElement.innerText = generateVTT(cues);
+              };
 
               cueSetStartElement.onclick = () => {
                 console.log(videoPosition, cue, captionData.cues)
