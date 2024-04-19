@@ -40,6 +40,7 @@ export const renderBasics = (parent: Element) => {
             <span id="subtitle-timestamp">00:00:00.000</span>
             <button id="subtitle-set-start" class="btn btn-light">Set start</button>
             <button id="subtitle-set-end" class="btn btn-light">Set end</button>
+            <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
           </p>
           <textarea id="subtitle-cue-input" width="100%"></textarea>
           <p>

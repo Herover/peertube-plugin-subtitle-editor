@@ -85,6 +85,7 @@ async function register ({
       const deleteCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete");
       const timelineElement = rootEl.querySelector<HTMLCanvasElement>("#subtitle-timeline");
       const padCuesElement = rootEl.querySelector<HTMLInputElement>("#subtitle-pad-cues");
+      const deleteCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete-cue");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -107,6 +108,7 @@ async function register ({
         || !deleteCurrentLanguageElement
         || !timelineElement
         || !padCuesElement
+        || !deleteCueElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff");
         alert("Something didn't load properly");
@@ -211,7 +213,20 @@ async function register ({
             };
 
 
-            const selectCue = (cue: any) => {
+            const selectCue = (cue: any | null) => {
+              if (cue == null) {
+                cueInputElement.value = "";
+                cueInputElement.disabled = true;
+                cueSetStartElement.disabled = true;
+                cueSetEndElement.disabled = true;
+                deleteCueElement.disabled = true;
+                return;
+              }
+              cueInputElement.disabled = false;
+              cueSetStartElement.disabled = false;
+              cueSetEndElement.disabled = false;
+              deleteCueElement.disabled = false;
+
               cueInputElement.value = cue.text;
               cueAlignElements.forEach(el => {
                 if (el.value == cue.align) el.checked = true;
@@ -272,8 +287,15 @@ async function register ({
                 // vttResultElement.innerText = generateVTT(cues);
               };
 
+              deleteCueElement.onclick = () => {
+                captionData.cues = captionData.cues.filter(c => c != cue);
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                selectCue(null);
+              }
+
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
             };
+            selectCue(null);
 
             if (playerStatusCallback) {
               player.removeEventListener("playbackStatusUpdate", playerStatusCallback);
