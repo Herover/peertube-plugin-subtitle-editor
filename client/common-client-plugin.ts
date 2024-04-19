@@ -61,6 +61,9 @@ async function register ({
       // Contains current player status fn, must be kept around so we can remove it later
       let playerStatusCallback: any;
 
+      // Minimum number of seconds between a cue endTime and next cue startTime
+      let cueMinSpace = 0.1; // TODO: make configureable
+
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
       const videoViewerElement = rootEl.querySelector("#subtitle-video-viewer");
@@ -81,6 +84,7 @@ async function register ({
       const saveCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-save");
       const deleteCurrentLanguageElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete");
       const timelineElement = rootEl.querySelector<HTMLCanvasElement>("#subtitle-timeline");
+      const padCuesElement = rootEl.querySelector<HTMLInputElement>("#subtitle-pad-cues");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -102,6 +106,7 @@ async function register ({
         || !saveCurrentLanguageElement
         || !deleteCurrentLanguageElement
         || !timelineElement
+        || !padCuesElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff");
         alert("Something didn't load properly");
@@ -166,6 +171,11 @@ async function register ({
           seekPlusElement.onclick = async () => player.seek(videoPosition + 1);
           pausePlayElement.onclick = async () => videoIsPlaying ? player.pause() : player.play();
           seekMinusElement.onclick = async () => player.seek(videoPosition - 1);
+
+          padCuesElement.checked = cueMinSpace == 0 ? false : true;
+          padCuesElement.onclick = (e) => {
+            cueMinSpace = (e.target as HTMLInputElement).checked ? 0.1 : 0;
+          };
 
           const selectLanguage = (languageId: string) => {
             currentCaptionLanguageId = languageId;
@@ -374,9 +384,21 @@ async function register ({
 
                   if (mouseDown) {
                     if (mouseDown?.box?.type == "cueEnd") {
-                      mouseDown.box.cue.endTime += e.movementX/timelineSecondLength;
+                      const newTime = mouseDown.box.cue.endTime + e.movementX/timelineSecondLength;
+                      if (
+                        cueMinSpace == 0 ||
+                        !captionData.cues.find(other => other.startTime - cueMinSpace < newTime && other.startTime > newTime - cueMinSpace)
+                      ) {
+                        mouseDown.box.cue.endTime = newTime;
+                      }
                     } else if (mouseDown?.box?.type == "cueStart") {
-                      mouseDown.box.cue.startTime += e.movementX/timelineSecondLength;
+                      const newTime = mouseDown.box.cue.startTime + e.movementX/timelineSecondLength;
+                      if (
+                        cueMinSpace == 0 ||
+                        !captionData.cues.find(other => other.endTime - cueMinSpace < newTime && other.endTime > newTime - cueMinSpace)
+                      ) {
+                        mouseDown.box.cue.startTime = newTime;
+                      }
                     } else if(!mouseDown.box) {
                       videoPosition -= e.movementX/timelineSecondLength;
                       player.seek(videoPosition);

@@ -47,6 +47,7 @@ export const renderBasics = (parent: Element) => {
             <label>Center <input value="center" name="subtitle-align" type="radio"/></label>
             <label>Right <input value="right" name="subtitle-align" type="radio"/></label>
           </p>
+          <p><label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label></p>
           <canvas id="subtitle-timeline" width=400 height=200 />
           <pre id="subtitle-vtt-result"></pre>
         </div>
