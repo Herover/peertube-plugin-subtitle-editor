@@ -390,17 +390,41 @@ async function register ({
                       const newTime = mouseDown.box.cue.endTime + e.movementX/timelineSecondLength;
                       if (
                         cueMinSpace == 0 ||
-                        !captionData.cues.find(other => other.startTime - cueMinSpace < newTime && other.startTime > newTime - cueMinSpace)
+                        !captionData.cues.find(other =>
+                          other.startTime - cueMinSpace < newTime &&
+                          other.startTime > newTime - cueMinSpace
+                        )
                       ) {
                         mouseDown.box.cue.endTime = newTime;
+                        if (!captionData.changed) {
+                          captionData.changed = true;
+                          renderLanguageSelector(
+                            languageListElement,
+                            captionList,
+                            currentCaptionLanguageId,
+                            selectLanguage,
+                          );
+                        }
                       }
                     } else if (mouseDown?.box?.type == "cueStart") {
                       const newTime = mouseDown.box.cue.startTime + e.movementX/timelineSecondLength;
                       if (
                         cueMinSpace == 0 ||
-                        !captionData.cues.find(other => other.endTime - cueMinSpace < newTime && other.endTime > newTime - cueMinSpace)
+                        !captionData.cues.find(other =>
+                          other.endTime - cueMinSpace < newTime &&
+                          other.endTime > newTime - cueMinSpace
+                        )
                       ) {
                         mouseDown.box.cue.startTime = newTime;
+                        if (!captionData.changed) {
+                          captionData.changed = true;
+                          renderLanguageSelector(
+                            languageListElement,
+                            captionList,
+                            currentCaptionLanguageId,
+                            selectLanguage,
+                          );
+                        }
                       }
                     } else if(!mouseDown.box) {
                       videoPosition -= e.movementX/timelineSecondLength;
