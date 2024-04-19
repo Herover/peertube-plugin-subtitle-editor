@@ -43,11 +43,6 @@ export const renderBasics = (parent: Element) => {
             <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
           </p>
           <textarea id="subtitle-cue-input" width="100%"></textarea>
-          <p>
-            <label>Left <input value="left" name="subtitle-align" type="radio"/></label>
-            <label>Center <input value="center" name="subtitle-align" type="radio"/></label>
-            <label>Right <input value="right" name="subtitle-align" type="radio"/></label>
-          </p>
           <p><label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label></p>
           <canvas id="subtitle-timeline" width=400 height=200 />
           <pre id="subtitle-vtt-result"></pre>

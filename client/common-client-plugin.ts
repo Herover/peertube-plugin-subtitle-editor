@@ -69,7 +69,6 @@ async function register ({
       const videoViewerElement = rootEl.querySelector("#subtitle-video-viewer");
       
       const cueInputElement = rootEl.querySelector<HTMLTextAreaElement>("#subtitle-cue-input");
-      const cueAlignElements = rootEl.querySelectorAll<HTMLInputElement>("input[name=subtitle-align]")
       const cueSetStartElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-start")
       const cueSetEndElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-end")
       const cueInsertCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new")
@@ -228,38 +227,6 @@ async function register ({
               deleteCueElement.disabled = false;
 
               cueInputElement.value = cue.text;
-              cueAlignElements.forEach(el => {
-                if (el.value == cue.align) el.checked = true;
-                else el.checked = false;
-
-                el.onclick = () => {
-                  if (el.checked) {
-                    cue.align = el.value;
-                    captionData.changed = true;
-                    renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                    renderLanguageSelector(
-                      languageListElement,
-                      captionList,
-                      currentCaptionLanguageId,
-                      selectLanguage,
-                    );
-                    // vttResultElement.innerText = generateVTT(cues);
-                  }
-                };
-
-                cueInputElement.onkeyup = () => {
-                  cue.text = cueInputElement.value;
-                  captionData.changed = true;
-                  renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                  renderLanguageSelector(
-                    languageListElement,
-                    captionList,
-                    currentCaptionLanguageId,
-                    selectLanguage,
-                  );
-                  // vttResultElement.innerText = generateVTT(cues);
-                };
-              });
 
               cueSetStartElement.onclick = () => {
                 console.log(videoPosition, cue, captionData.cues)
