@@ -200,19 +200,19 @@ export const renderTimeline = (
   ctx.strokeStyle = "#000000";
   ctx.fillStyle = "#000000";
 
+  ctx.beginPath();
   for (let i = 0; i < duration * 10; i += 1) {
     let t = i / 10;
-    const p = (t - time) * timelineSecondLength + (width / 2);
+    const p = Math.floor((t - time) * timelineSecondLength + (width / 2));
     if (p < width && 0 < p) {
-      ctx.beginPath();
       ctx.moveTo(p, 20);
       ctx.lineTo(p, t % 1 == 0 ? 30 : 24);
-      ctx.stroke();
     }
   }
+  ctx.stroke();
 
   for (let i = 0; i < duration; i++) {
-    const p = (i - time) * timelineSecondLength + (width / 2);
+    const p = Math.floor((i - time) * timelineSecondLength + (width / 2));
     if (p < width && 0 < p) {
       ctx.textAlign = "center";
       // ctx.moveTo(p, 0);
@@ -222,21 +222,24 @@ export const renderTimeline = (
 
   if (bars) {
     const w = barsInterval * timelineSecondLength;
+    ctx.beginPath();
+    ctx.fillStyle = "#ff9853";
+    ctx.moveTo(0, height);
     bars.forEach((bar, i) => {
       const p1 = (i * barsInterval - time) * timelineSecondLength + (width / 2);
-      // const p2 = p1 + barsInterval * timelineSecondLength;
       if (-w < p1 && p1 < width) {
-        ctx.fillStyle = "#0000cc";
         const h = bar*height/2;
-        ctx.fillRect(p1, height-h, w + 1, h);
+        ctx.lineTo(p1,height-h);
       }
     })
+    ctx.lineTo(width, height);
+    ctx.fill();
   }
 
   for (let i = 0; i < cues.length; i++) {
     const cue = cues[i];
-    const p1 = (cue.startTime - time) * timelineSecondLength + (width / 2);
-    const p2 = (cue.endTime - time) * timelineSecondLength + (width / 2);
+    const p1 = Math.floor((cue.startTime - time) * timelineSecondLength + (width / 2));
+    const p2 = Math.floor((cue.endTime - time) * timelineSecondLength + (width / 2));
 
     let lane = lanes.findIndex(end => end < cue.startTime);
     if (lane == -1) {
