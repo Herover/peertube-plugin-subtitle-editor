@@ -27,28 +27,30 @@ export const renderBasics = (parent: Element) => {
       </div>
       <div class="col-md-6">
         <div class="subtitle-editor">
-          <div id="subtitle-video-viewer"></div>
-          <div id="subtitle-video-controls">
-            <button id="subtitle-seek-minus-1" class="btn btn-light">-1s</button>
-            <button id="subtitle-pause-play" class="btn btn-light">Pause/play</button>
-            <button id="subtitle-seek-plus-1" class="btn btn-light">+1s</button>
-            
-            <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
-            <button id="subtitle-select-current" class="btn btn-light">Select current</button>
+          <div class="subtitle-editor-overflow">
+            <div id="subtitle-video-viewer"></div>
+            <div id="subtitle-video-controls">
+              <button id="subtitle-seek-minus-1" class="btn btn-light">-1s</button>
+              <button id="subtitle-pause-play" class="btn btn-light">Pause/play</button>
+              <button id="subtitle-seek-plus-1" class="btn btn-light">+1s</button>
+              
+              <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
+              <button id="subtitle-select-current" class="btn btn-light">Select current</button>
+            </div>
+            <p>
+              <span id="subtitle-timestamp">00:00:00.000</span>
+              <button id="subtitle-set-start" class="btn btn-light">Set start</button>
+              <button id="subtitle-set-end" class="btn btn-light">Set end</button>
+              <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
+            </p>
+            <textarea id="subtitle-cue-input" width="100%"></textarea>
+            <p>
+              <label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label>
+              <button id="subtitle-visualize-audio" class="btn btn-info">Visualize audio (<span id="subtitle-visualize-audio-size">0 mb.</span>)</button>
+            </p>
+            <canvas id="subtitle-timeline" width=400 height=200 />
+            <pre id="subtitle-vtt-result"></pre>
           </div>
-          <p>
-            <span id="subtitle-timestamp">00:00:00.000</span>
-            <button id="subtitle-set-start" class="btn btn-light">Set start</button>
-            <button id="subtitle-set-end" class="btn btn-light">Set end</button>
-            <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
-          </p>
-          <textarea id="subtitle-cue-input" width="100%"></textarea>
-          <p>
-            <label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label>
-            <button id="subtitle-visualize-audio" class="btn btn-info">Visualize audio (<span id="subtitle-visualize-audio-size">0 mb.</span>)</button>
-          </p>
-          <canvas id="subtitle-timeline" width=400 height=200 />
-          <pre id="subtitle-vtt-result"></pre>
         </div>
       </div>
     </div>
