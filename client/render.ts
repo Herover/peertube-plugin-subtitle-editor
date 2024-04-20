@@ -43,7 +43,10 @@ export const renderBasics = (parent: Element) => {
             <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
           </p>
           <textarea id="subtitle-cue-input" width="100%"></textarea>
-          <p><label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label></p>
+          <p>
+            <label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label>
+            <button id="subtitle-visualize-audio" class="btn btn-info">Visualize audio (<span id="subtitle-visualize-audio-size">0 mb.</span>)</button>
+          </p>
           <canvas id="subtitle-timeline" width=400 height=200 />
           <pre id="subtitle-vtt-result"></pre>
         </div>
@@ -174,6 +177,8 @@ export const renderTimeline = (
   duration: number,
   width: number,
   height: number,
+  barsInterval: number,
+  bars?: Float32Array,
 ) => {
   const clickBoxes: TimelineClickBox[] = [];
   const dragRadius = 8;
@@ -211,6 +216,19 @@ export const renderTimeline = (
       // ctx.moveTo(p, 0);
       ctx.fillText("" + i % 60, p, 18);
     }
+  }
+
+  if (bars) {
+    const w = barsInterval * timelineSecondLength;
+    bars.forEach((bar, i) => {
+      const p1 = (i * barsInterval - time) * timelineSecondLength + (width / 2);
+      // const p2 = p1 + barsInterval * timelineSecondLength;
+      if (-w < p1 && p1 < width) {
+        ctx.fillStyle = "#0000cc";
+        const h = bar*height/2;
+        ctx.fillRect(p1, height-h, w + 1, h);
+      }
+    })
   }
 
   for (let i = 0; i < cues.length; i++) {

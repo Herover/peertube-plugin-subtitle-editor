@@ -3,7 +3,7 @@ import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
 import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderTimeline, TimelineClickBox, timelineSecondLength } from './render';
 import { formatTime } from './util';
-import { VideoCaption, VideoDetails } from '@peertube/peertube-types/peertube-models';
+import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types/peertube-models';
 
 const newCueLength = 5;
 
@@ -60,6 +60,8 @@ async function register ({
       let currentCaptionLanguageId = "";
       // Contains current player status fn, must be kept around so we can remove it later
       let playerStatusCallback: any;
+      let audioBars: Float32Array;
+      const audioBarsInterval = 0.01; // Seconds
 
       // Minimum number of seconds between a cue endTime and next cue startTime
       let cueMinSpace = 0.1; // TODO: make configureable
@@ -85,6 +87,8 @@ async function register ({
       const timelineElement = rootEl.querySelector<HTMLCanvasElement>("#subtitle-timeline");
       const padCuesElement = rootEl.querySelector<HTMLInputElement>("#subtitle-pad-cues");
       const deleteCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete-cue");
+      const visualizeAudioElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-visualize-audio");
+      const visualizeAudioSizeElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-visualize-audio-size");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -108,6 +112,8 @@ async function register ({
         || !timelineElement
         || !padCuesElement
         || !deleteCueElement
+        || !visualizeAudioElement
+        || !visualizeAudioSizeElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff");
         alert("Something didn't load properly");
@@ -177,6 +183,46 @@ async function register ({
           padCuesElement.onclick = (e) => {
             cueMinSpace = (e.target as HTMLInputElement).checked ? 0.1 : 0;
           };
+
+          const smalestVideoFile = videoData.streamingPlaylists.reduce((acc, l) => {
+            // Assume all streamin playlists and files contain the same audio
+            const smalestFile = l.files.reduce((acc, f) => {
+              if (!acc) return f;
+              if (f.size < acc.size) return f;
+              return acc;
+            });
+
+            if (!acc) return smalestFile;
+            if (smalestFile.size < acc.size) return smalestFile;
+            return acc;
+          }, undefined as undefined | VideoFile);
+          visualizeAudioElement.onclick = async () => {
+            if (!smalestVideoFile) {
+              alert("Unable to find video file");
+              return;
+            }
+            const audioData = await fetch(smalestVideoFile.fileDownloadUrl);
+            const audioCtx = new AudioContext();
+            const buffer = await audioCtx.decodeAudioData(await audioData.arrayBuffer());
+            
+            (window as any).abuf = buffer;
+            const data = buffer.getChannelData(0);
+            const step = buffer.sampleRate * audioBarsInterval;
+            audioBars = new Float32Array(buffer.length/step);
+            let maxBar = 0;
+            for (let sampleIndex = 0; sampleIndex < buffer.length; sampleIndex += step) {
+              let v = 0;
+              for (let i = sampleIndex; i < sampleIndex + step; i ++) {
+                // v += data[i];
+                v = Math.max(v, data[i]);
+              }
+              audioBars[sampleIndex/step] = v;
+              maxBar = Math.max(maxBar, v || 0);
+            }
+            // Normalize
+            audioBars = audioBars.map(v => v/maxBar);
+          };
+          visualizeAudioSizeElement.innerText = smalestVideoFile ? Math.round(smalestVideoFile.size/1000000) + " mb." : "?";
 
           const selectLanguage = (languageId: string) => {
             currentCaptionLanguageId = languageId;
@@ -352,6 +398,8 @@ async function register ({
                   videoDuration,
                   width,
                   height,
+                  audioBarsInterval,
+                  audioBars,
                 );
 
                 const getBoxAtPosition = (e: MouseEvent) => {
