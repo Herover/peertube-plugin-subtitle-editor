@@ -374,6 +374,7 @@ async function register ({
 
             let mouseDown: { x: number, y: number, box?: TimelineClickBox } | null = null;
             let lastTimelineRender = 0;
+            let lastX: null | number = null;
             const updateTimeline = (t: number) => {
               if (videoIsPlaying) {
                 videoPosition += (t-lastTimelineRender)/1000;
@@ -416,6 +417,8 @@ async function register ({
                 }
 
                 timelineElement.onmousemove = (e) => {
+                  let deltaX = e.screenX - (lastX || e.screenX);
+                  lastX = e.screenX;
                   const box = getBoxAtPosition(e);
                   if (box) {
                     if (box.type == 'cue') {
@@ -435,7 +438,7 @@ async function register ({
 
                   if (mouseDown) {
                     if (mouseDown?.box?.type == "cueEnd") {
-                      const newTime = mouseDown.box.cue.endTime + e.movementX/timelineSecondLength;
+                      const newTime = mouseDown.box.cue.endTime + deltaX/timelineSecondLength;
                       if (
                         cueMinSpace == 0 ||
                         !captionData.cues.find(other =>
@@ -455,7 +458,7 @@ async function register ({
                         }
                       }
                     } else if (mouseDown?.box?.type == "cueStart") {
-                      const newTime = mouseDown.box.cue.startTime + e.movementX/timelineSecondLength;
+                      const newTime = mouseDown.box.cue.startTime + deltaX/timelineSecondLength;
                       if (
                         cueMinSpace == 0 ||
                         !captionData.cues.find(other =>
@@ -475,7 +478,7 @@ async function register ({
                         }
                       }
                     } else if(!mouseDown.box) {
-                      videoPosition -= e.movementX/timelineSecondLength;
+                      videoPosition -= deltaX/timelineSecondLength;
                       player.seek(videoPosition);
                       timestampElement.innerText = formatTime(videoPosition);
                     }
@@ -490,6 +493,7 @@ async function register ({
                 };
                 timelineElement.onmouseup = () => {
                   mouseDown = null;
+                  lastX = null;
                 };
               }
 
