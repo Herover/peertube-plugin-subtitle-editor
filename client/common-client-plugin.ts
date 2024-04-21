@@ -167,6 +167,8 @@ async function register ({
           
           const videoData: VideoDetails = await videoDataRequest.json();
 
+          videoDuration = videoData.duration;
+
           const playerIframeEl = document.createElement("iframe");
           playerIframeEl.setAttribute("title", videoData.name);
           playerIframeEl.setAttribute("width", "100%");
