@@ -165,8 +165,6 @@ async function register ({
             cues: (await getVTTDataFromUrl(c.captionPath)).cues,
           })));
 
-          let timelineContext = timelineElement.getContext("2d");
-
           const languages: { [id: string]: string } = await languagesRequest.json();
           renderLanguageList(
             addNewLanguageListElement,
@@ -196,6 +194,33 @@ async function register ({
           padCuesElement.checked = cueMinSpace == 0 ? false : true;
           padCuesElement.onclick = (e) => {
             cueMinSpace = (e.target as HTMLInputElement).checked ? 0.1 : 0;
+          };
+
+          let timelineContext = timelineElement.getContext("2d");
+          window.onkeydown = (e) => {
+            console.log(e, (e.target as any).tagName)
+            if (
+              e.defaultPrevented ||
+              e.target == cueInputElement ||
+              (e.target && (
+                (e.target as any).tagName == "BUTTON" || (e.target as any).tagName == "A" || (e.target as any).tagName == "INPUT")
+              )
+            ) return;
+            console.log(e)
+            if (e.key == " ") {
+              e.preventDefault();
+              if (videoIsPlaying) {
+                player.pause();
+              } else {
+                player.play();
+              }
+            } else if (e.key == "ArrowLeft") {
+              e.preventDefault();
+              player.seek(videoPosition - 1);
+            } else if (e.key == "ArrowRight") {
+              e.preventDefault();
+              player.seek(videoPosition + 1);
+            }
           };
 
           const smalestVideoFile = videoData.streamingPlaylists.reduce((acc, l) => {
