@@ -367,7 +367,6 @@ async function register ({
               if (position != videoPosition) {
                 videoPosition = position;
                 videoIsPlaying = playbackState == "playing";
-                videoDuration = Number.parseInt(duration);
 
                 timestampElement.innerText = formatTime(position);
 
@@ -459,13 +458,16 @@ async function register ({
                     }
                     if (box.type == "cueStart") {
                       timelineElement.style.cursor = "ew-resize";
+                      timelineElement.onclick = () => {};
                       
                     }
                     if (box.type == "cueEnd") {
                       timelineElement.style.cursor = "ew-resize";
+                      timelineElement.onclick = () => {};
                     }
                   } else {
                     timelineElement.style.cursor = "grab";
+                    timelineElement.onclick = () => {};
                   }
 
                   if (mouseDown) {
