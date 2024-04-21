@@ -562,7 +562,7 @@ async function register ({
           };
 
           addCopyLanguageElement.onclick = async () => {
-            const existing = captionList.find(e => e.id == addNewLanguageListElement.value);
+            const existing = captionList.find(e => e.id == currentCaptionLanguageId);
             if (existing) {
               captionList.push({
                 changed: true,
