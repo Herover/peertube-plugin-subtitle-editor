@@ -7,20 +7,6 @@ import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types/
 
 const newCueLength = 3;
 
-const getVTTDataFromUrl = async (url: string) => {
-  return await fetch(url).then(d => d.text()).then(data => {
-    let cues: any[] = [];
-    const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
-    vttParser.oncue = (cue: any) => {
-      cues.push(cue);
-    };
-    vttParser.parse(data);
-    vttParser.flush();
-
-    return { cues };
-  });
-};
-
 async function register ({
   peertubeHelpers,
   registerHook,
@@ -65,6 +51,28 @@ async function register ({
 
       // Minimum number of seconds between a cue endTime and next cue startTime
       let cueMinSpace = 0.1; // TODO: make configureable
+
+      // Required on all requests as videos might be private or otherwise limited to specific accounts
+      const fetchCredentials: RequestInit = {
+        credentials: 'include',
+        headers: {
+          "authorization": "Bearer " + localStorage.getItem("access_token") || "",
+        },
+      };
+
+      const getVTTDataFromUrl = async (url: string) => {
+        return await fetch(url, fetchCredentials).then(d => d.text()).then(data => {
+          let cues: any[] = [];
+          const vttParser = new vtt.WebVTT.Parser(window, vtt.WebVTT.StringDecoder());
+          vttParser.oncue = (cue: any) => {
+            cues.push(cue);
+          };
+          vttParser.parse(data);
+          vttParser.flush();
+      
+          return { cues };
+        });
+      };
 
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
@@ -138,9 +146,9 @@ async function register ({
             captionsRequest,
             languagesRequest,
           ] = await Promise.all([
-            fetch(`/api/v1/videos/${parameters.id}`),
-            fetch(`/api/v1/videos/${parameters.id}/captions`),
-            fetch("/api/v1/videos/languages"),
+            fetch(`/api/v1/videos/${parameters.id}`, fetchCredentials),
+            fetch(`/api/v1/videos/${parameters.id}/captions`, fetchCredentials),
+            fetch("/api/v1/videos/languages", fetchCredentials),
           ]);
 
           if (captionsRequest.status !== 200 || videoDataRequest.status !== 200) {
@@ -211,7 +219,7 @@ async function register ({
             visualizeAudioElement.innerText = "Loading...";
             visualizeAudioElement.disabled = true;
 
-            const audioData = await fetch(smalestVideoFile.fileDownloadUrl);
+            const audioData = await fetch(smalestVideoFile.fileDownloadUrl, fetchCredentials);
             const audioCtx = new AudioContext();
             const buffer = await audioCtx.decodeAudioData(await audioData.arrayBuffer());
             
@@ -380,11 +388,7 @@ async function register ({
                   {
                     method: "PUT",
                     body: formData,
-                    credentials: 'include', 
-                    withCredentials: true,
-                    headers: {
-                      "authorization": "Bearer " + localStorage.getItem("access_token") || "",
-                    },
+                    ...fetchCredentials,
                   } as any,
                 );
                 if (res.status == 204) {
@@ -584,10 +588,7 @@ async function register ({
                   action: async () => {
                     const res = await fetch(`/api/v1/videos/${parameters.id}/captions/${currentCaptionLanguageId}`, {
                       method: "DELETE",
-                      credentials: 'include',
-                      headers: {
-                        "authorization": "Bearer " + localStorage.getItem("access_token") || "",
-                      },
+                      ...fetchCredentials,
                     });
                     
                     if (res.status == 204) {
