@@ -286,6 +286,7 @@ async function register ({
               deleteCueElement.disabled = false;
 
               cueInputElement.value = cue.text;
+              cueInputElement.focus();
 
               cueInputElement.onkeyup = () => {
                 cue.text = cueInputElement.value;
