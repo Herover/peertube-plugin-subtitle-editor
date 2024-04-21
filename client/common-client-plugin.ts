@@ -75,6 +75,7 @@ async function register ({
       const cueSetEndElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-end")
       const cueInsertCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new")
       const cueInsertCueAfterElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new-after")
+      const cueInsertCueAfterSelectedElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new-selected")
       const cueSelectCurrentCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-select-current")
       const languageListElement = rootEl.querySelector<HTMLDivElement>("#subtitle-languages")
       const seekPlusElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-seek-plus-1");
@@ -103,6 +104,7 @@ async function register ({
         || !cueSetEndElement
         || !cueInsertCueElement
         || !cueInsertCueAfterElement
+        || !cueInsertCueAfterSelectedElement
         || !cueSelectCurrentCueElement
         || !timestampElement
         || !languageListElement
@@ -336,6 +338,14 @@ async function register ({
                 captionData.cues = captionData.cues.filter(c => c != cue);
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
                 selectCue(null);
+              }
+
+              cueInsertCueAfterSelectedElement.onclick = () => {
+                const cue2 = new VTTCue(cue.endTime + cueMinSpace, cue.endTime + cueMinSpace + newCueLength, "");
+                captionData.cues.push(cue2);
+                captionData.cues.sort((a, b) => a.startTime - b.startTime);
+                selectCue(cue2);
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
               }
 
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });

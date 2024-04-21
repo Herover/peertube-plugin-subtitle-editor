@@ -38,6 +38,7 @@ export const renderBasics = (parent: Element) => {
                 <button id="subtitle-select-current" class="btn btn-secondary">Select here</button>
                 <button id="subtitle-insert-new" class="btn btn-primary">Insert here</button>
                 <button id="subtitle-insert-new-after" class="btn btn-primary">Insert after here</button>
+                <button id="subtitle-insert-new-selected" class="btn btn-primary">Insert after selected</button>
               </p>
             </div>
             <p>
