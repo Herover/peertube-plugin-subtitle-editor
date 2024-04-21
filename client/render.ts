@@ -35,9 +35,9 @@ export const renderBasics = (parent: Element) => {
                 <button id="subtitle-pause-play" class="btn btn-dark">Pause/play</button>
                 <button id="subtitle-seek-plus-1" class="btn btn-dark">+1s</button>
                 
-                <button id="subtitle-select-current" class="btn btn-dark">Select here</button>
-                <button id="subtitle-insert-new" class="btn btn-dark">Insert here</button>
-                <button id="subtitle-insert-new-after" class="btn btn-dark">Insert after here</button>
+                <button id="subtitle-select-current" class="btn btn-secondary">Select here</button>
+                <button id="subtitle-insert-new" class="btn btn-primary">Insert here</button>
+                <button id="subtitle-insert-new-after" class="btn btn-primary">Insert after here</button>
               </p>
             </div>
             <p>
