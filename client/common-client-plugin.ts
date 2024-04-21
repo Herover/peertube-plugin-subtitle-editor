@@ -5,7 +5,7 @@ import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLa
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types/peertube-models';
 
-const newCueLength = 5;
+const newCueLength = 3;
 
 const getVTTDataFromUrl = async (url: string) => {
   return await fetch(url).then(d => d.text()).then(data => {
@@ -74,6 +74,7 @@ async function register ({
       const cueSetStartElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-start")
       const cueSetEndElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-end")
       const cueInsertCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new")
+      const cueInsertCueAfterElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-insert-new-after")
       const cueSelectCurrentCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-select-current")
       const languageListElement = rootEl.querySelector<HTMLDivElement>("#subtitle-languages")
       const seekPlusElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-seek-plus-1");
@@ -101,6 +102,7 @@ async function register ({
         || !cueSetStartElement
         || !cueSetEndElement
         || !cueInsertCueElement
+        || !cueInsertCueAfterElement
         || !cueSelectCurrentCueElement
         || !timestampElement
         || !languageListElement
@@ -246,7 +248,6 @@ async function register ({
               if (cue) {
                 selectCue(cue);
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-                // vttResultElement.innerText = generateVTT(cues);
               }
             };
             cueInsertCueElement.onclick = () => {
@@ -255,7 +256,16 @@ async function register ({
               captionData.cues.sort((a, b) => a.startTime - b.startTime);
               selectCue(cue);
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
-              // vttResultElement.innerText = generateVTT(cues);
+            };
+            cueInsertCueAfterElement.onclick = () => {
+              const cueHere = captionData.cues.find(c => c.startTime <= videoPosition && videoPosition <= c.endTime);
+              const t = cueHere ? cueHere.endTime + cueMinSpace : videoPosition;
+              
+              const cue = new VTTCue(t, t + newCueLength, "");
+              captionData.cues.push(cue);
+              captionData.cues.sort((a, b) => a.startTime - b.startTime);
+              selectCue(cue);
+              renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
             };
 
 
