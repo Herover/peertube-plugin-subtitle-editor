@@ -30,21 +30,23 @@ export const renderBasics = (parent: Element) => {
           <div class="subtitle-editor-overflow">
             <div id="subtitle-video-viewer"></div>
             <div id="subtitle-video-controls">
-              <button id="subtitle-seek-minus-1" class="btn btn-light">-1s</button>
-              <button id="subtitle-pause-play" class="btn btn-light">Pause/play</button>
-              <button id="subtitle-seek-plus-1" class="btn btn-light">+1s</button>
-              
-              <button id="subtitle-select-current" class="btn btn-light">Select here</button>
-              <button id="subtitle-insert-new" class="btn btn-light">Insert here</button>
-              <button id="subtitle-insert-new-after" class="btn btn-light">Insert after here</button>
+              <p>
+                <button id="subtitle-seek-minus-1" class="btn btn-dark">-1s</button>
+                <button id="subtitle-pause-play" class="btn btn-dark">Pause/play</button>
+                <button id="subtitle-seek-plus-1" class="btn btn-dark">+1s</button>
+                
+                <button id="subtitle-select-current" class="btn btn-dark">Select here</button>
+                <button id="subtitle-insert-new" class="btn btn-dark">Insert here</button>
+                <button id="subtitle-insert-new-after" class="btn btn-dark">Insert after here</button>
+              </p>
             </div>
             <p>
               <span id="subtitle-timestamp">00:00:00.000</span>
-              <button id="subtitle-set-start" class="btn btn-light">Set start</button>
-              <button id="subtitle-set-end" class="btn btn-light">Set end</button>
+              <button id="subtitle-set-start" class="btn btn-secondary">Set start</button>
+              <button id="subtitle-set-end" class="btn btn-secondary">Set end</button>
               <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
             </p>
-            <textarea id="subtitle-cue-input" width="100%"></textarea>
+            <textarea id="subtitle-cue-input" class="form-control"></textarea>
             <p>
               <label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label>
               <button id="subtitle-visualize-audio" class="btn btn-info">Visualize audio (<span id="subtitle-visualize-audio-size">0 mb.</span>)</button>
