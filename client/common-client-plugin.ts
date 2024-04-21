@@ -77,6 +77,7 @@ async function register ({
       renderBasics(rootEl);
       const cuesElement = rootEl.querySelector("#subtitle-cues");
       const videoViewerElement = rootEl.querySelector("#subtitle-video-viewer");
+      const previewElement = rootEl.querySelector<HTMLDivElement>("#subtitle-preview");
       
       const cueInputElement = rootEl.querySelector<HTMLTextAreaElement>("#subtitle-cue-input");
       const cueSetStartElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-set-start")
@@ -104,6 +105,7 @@ async function register ({
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
       if (!cuesElement
         || !videoViewerElement
+        || !previewElement
         || !seekPlusElement
         || !pausePlayElement
         || !seekMinusElement
@@ -431,10 +433,16 @@ async function register ({
             let mouseDown: { x: number, y: number, box?: TimelineClickBox } | null = null;
             let lastTimelineRender = 0;
             let lastX: null | number = null;
+            let currentCues: any[] = [];
             const updateTimeline = (t: number) => {
               if (videoIsPlaying) {
                 videoPosition += (t-lastTimelineRender)/1000;
                 timestampElement.innerText = formatTime(videoPosition);
+                currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
+                const previewText = currentCues.map(cue => cue.text).join("\n");
+                if (previewText != previewElement.innerText) {
+                  previewElement.innerText = previewText;
+                }
               }
               lastTimelineRender = t;
               timelineContext = timelineElement.getContext("2d");

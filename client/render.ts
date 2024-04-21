@@ -29,6 +29,7 @@ export const renderBasics = (parent: Element) => {
         <div class="subtitle-editor">
           <div class="subtitle-editor-overflow">
             <div id="subtitle-video-viewer"></div>
+            <div id="subtitle-preview"></div>
             <div id="subtitle-video-controls">
               <p>
                 <button id="subtitle-seek-minus-1" class="btn btn-dark">-1s</button>

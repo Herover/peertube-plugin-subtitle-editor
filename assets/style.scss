@@ -52,6 +52,13 @@
   position: absolute;
   inset: 0px;
 }
+#subtitle-preview {
+  background-color: #000000;
+  color: #ffffff;
+  text-align: center;
+  min-height: 50px;
+  white-space: pre-line; // To display manual newlines
+}
 #subtitle-cue-input {
   padding-bottom: 1em;
 }
