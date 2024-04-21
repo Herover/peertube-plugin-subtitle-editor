@@ -205,6 +205,10 @@ async function register ({
               alert("Unable to find video file");
               return;
             }
+
+            visualizeAudioElement.innerText = "Loading...";
+            visualizeAudioElement.disabled = true;
+
             const audioData = await fetch(smalestVideoFile.fileDownloadUrl);
             const audioCtx = new AudioContext();
             const buffer = await audioCtx.decodeAudioData(await audioData.arrayBuffer());
@@ -225,6 +229,7 @@ async function register ({
             }
             // Normalize
             audioBars = audioBars.map(v => v/maxBar);
+            visualizeAudioElement.style.display = "none";
           };
           visualizeAudioSizeElement.innerText = smalestVideoFile ? Math.round(smalestVideoFile.size/1000000) + " mb." : "?";
 
