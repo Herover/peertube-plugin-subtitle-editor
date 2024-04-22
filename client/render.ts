@@ -2,7 +2,7 @@ import { formatTime } from "./util";
 
 export const renderBasics = (parent: Element) => {
   parent.innerHTML = `
-    <div class="margin-content row subtitle-main">
+    <div class="margin-content row subtitle-head">
       <div class="col-md-12">
         <div id="subtitle-languages" class="action-bubble"></div>
         <div class="action-bubble">
@@ -16,7 +16,7 @@ export const renderBasics = (parent: Element) => {
         </div>
       </div>
     </div>
-    <div class="margin-content row">
+    <div class="margin-content row subtitle-main">
       <div class="col-md-6">
         <table class="subtitle-cues">
           <thead>
@@ -30,18 +30,6 @@ export const renderBasics = (parent: Element) => {
           <div class="subtitle-editor-overflow">
             <div id="subtitle-video-viewer"></div>
             <div id="subtitle-preview"></div>
-            <div id="subtitle-video-controls">
-              <p>
-                <button id="subtitle-seek-minus-1" class="btn btn-dark">-1s</button>
-                <button id="subtitle-pause-play" class="btn btn-dark">Pause/play</button>
-                <button id="subtitle-seek-plus-1" class="btn btn-dark">+1s</button>
-                
-                <button id="subtitle-select-current" class="btn btn-secondary">Select here</button>
-                <button id="subtitle-insert-new" class="btn btn-primary">Insert here</button>
-                <button id="subtitle-insert-new-after" class="btn btn-primary">Insert after here</button>
-                <button id="subtitle-insert-new-selected" class="btn btn-primary">Insert after selected</button>
-              </p>
-            </div>
             <p>
               <span id="subtitle-timestamp">00:00:00.000</span>
               <button id="subtitle-set-start" class="btn btn-secondary">Set start</button>
@@ -49,13 +37,30 @@ export const renderBasics = (parent: Element) => {
               <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
             </p>
             <textarea id="subtitle-cue-input" class="form-control"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="bottom-controls">
+      <div class="margin-content row">
+        <div class="md-12">
+          <div id="subtitle-video-controls">
             <p>
               <label><input id="subtitle-pad-cues" type="checkbox">Pad cues</label>
               <button id="subtitle-visualize-audio" class="btn btn-info">Visualize audio (<span id="subtitle-visualize-audio-size">0 mb.</span>)</button>
+
+              <button id="subtitle-seek-minus-1" class="btn btn-dark">-1s</button>
+              <button id="subtitle-pause-play" class="btn btn-dark">Pause/play</button>
+              <button id="subtitle-seek-plus-1" class="btn btn-dark">+1s</button>
+              
+              <button id="subtitle-select-current" class="btn btn-secondary">Select here</button>
+              <button id="subtitle-insert-new" class="btn btn-primary">Insert here</button>
+              <button id="subtitle-insert-new-after" class="btn btn-primary">Insert after here</button>
+              <button id="subtitle-insert-new-selected" class="btn btn-primary">Insert after selected</button>
             </p>
-            <canvas id="subtitle-timeline" width=400 height=200 />
-            <pre id="subtitle-vtt-result"></pre>
           </div>
+          <canvas id="subtitle-timeline" />
+          <pre id="subtitle-vtt-result"></pre>
         </div>
       </div>
     </div>
