@@ -17,11 +17,9 @@ async function register ({
   registerHook({
     target: 'action:video-edit.init',
     handler: (data: any) => {
-      console.log(data)
-
       const videoId = window.location.pathname.match(/(?!\/)[\d\w\-]*$/);
       if (!videoId || videoId.length == 0) {
-        console.log("No id found")
+        alert("No id found")
         return;
       }
       const link = document.createElement("a")
@@ -237,7 +235,6 @@ async function register ({
 
           let timelineContext = timelineElement.getContext("2d");
           window.onkeydown = (e) => {
-            console.log(e, (e.target as any).tagName)
             if (
               e.defaultPrevented ||
               e.target == cueInputElement ||
@@ -245,7 +242,6 @@ async function register ({
                 (e.target as any).tagName == "BUTTON" || (e.target as any).tagName == "A" || (e.target as any).tagName == "INPUT")
               )
             ) return;
-            console.log(e)
             if (e.key == " ") {
               e.preventDefault();
               if (videoIsPlaying) {
@@ -381,7 +377,6 @@ async function register ({
               };
 
               cueSetStartElement.onclick = () => {
-                console.log(videoPosition, cue, captionData.cues)
                 cue.startTime = videoPosition;
                 captionData.changed = true;
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
