@@ -46,6 +46,7 @@ async function register ({
       let currentCaptionLanguageId = "";
       // Contains current player status fn, must be kept around so we can remove it later
       let playerStatusCallback: any;
+      let playerStatusChangeCallback: any;
       let audioBars: Float32Array;
       const audioBarsInterval = 0.01; // Seconds
 
@@ -223,7 +224,10 @@ async function register ({
           videoViewerElement.appendChild(playerIframeEl);
           let player = new PeerTubePlayer(playerIframeEl);
           seekPlusElement.onclick = async () => player.seek(videoPosition + 1);
-          pausePlayElement.onclick = async () => videoIsPlaying ? player.pause() : player.play();
+          pausePlayElement.onclick = async () => {
+            videoIsPlaying ? player.pause() : player.play();
+            videoIsPlaying = !videoIsPlaying;
+          };
           seekMinusElement.onclick = async () => player.seek(videoPosition - 1);
 
           padCuesElement.checked = cueMinSpace == 0 ? false : true;
@@ -423,6 +427,9 @@ async function register ({
             if (playerStatusCallback) {
               player.removeEventListener("playbackStatusUpdate", playerStatusCallback);
             }
+            if (playerStatusChangeCallback) {
+              player.removeEventListener("playbackStatusChange", playerStatusChangeCallback);
+            }
             playerStatusCallback = ({ position, playbackState, duration }: { position: number, playbackState: string, duration: string }) => {
               if (position != videoPosition) {
                 videoPosition = position;
@@ -433,10 +440,15 @@ async function register ({
                 renderCueTable(cuesElement, captionData.cues, { time: position, onCueSelected: (cue => selectCue(cue)) });
               }
             };
+            playerStatusChangeCallback = (playbackState: string) => videoIsPlaying = playbackState == "playing"
             player.addEventListener(
               "playbackStatusUpdate",
               playerStatusCallback
             );
+            player.addEventListener(
+              "playbackStatusChange",
+              playerStatusChangeCallback,
+            )
 
             saveCurrentLanguageElement.onclick = async () => {
               if (currentCaptionLanguageId) {
