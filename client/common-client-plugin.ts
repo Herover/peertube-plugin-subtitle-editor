@@ -465,19 +465,22 @@ async function register ({
 
             let mouseDown: { x: number, y: number, box?: TimelineClickBox } | null = null;
             let lastTimelineRender = 0;
+            let lastTimelineVideoPosition = 0;
             let lastX: null | number = null;
             let currentCues: any[] = [];
             const updateTimeline = (t: number) => {
               if (videoIsPlaying) {
                 videoPosition += (t-lastTimelineRender)/1000;
                 timestampElement.innerText = formatTime(videoPosition);
+              }
+              if (videoPosition != lastTimelineVideoPosition) {
                 currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
                 const previewText = currentCues.map(cue => cue.text).join("\n");
                 if (previewText != previewElement.innerText) {
                   previewElement.innerText = previewText;
                 }
               }
-              lastTimelineRender = t;
+
               timelineContext = timelineElement.getContext("2d");
               const width = timelineElement.parentElement?.offsetWidth || 400;
               const height = 200;
@@ -596,6 +599,8 @@ async function register ({
                   lastX = null;
                 };
               }
+              lastTimelineRender = t;
+              lastTimelineVideoPosition = videoPosition;
 
               if (currentCaptionLanguageId == languageId && originalHref == location.href) {
                 requestAnimationFrame(updateTimeline);
