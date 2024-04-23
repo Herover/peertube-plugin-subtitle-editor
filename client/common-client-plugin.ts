@@ -143,6 +143,39 @@ async function register ({
         }, {} as {[key: string]: string})
 
         if (parameters.id) {
+          const originalHref = location.href;
+
+          const lock = await (await fetch("/plugins/subtitle-editor/router/lock?id=" + parameters.id, fetchCredentials)).json();
+          if (lock.locked && new Date().getTime() < new Date(lock.changed).getTime() + 60*1000) {
+            alert("Someone might be editing! If this is not you, make sure to coordinate with the other person or risk loosing data");
+          }
+          let lockInterval: NodeJS.Timeout;
+          const setLock = () => {
+            if (originalHref != location.href) {
+              clearInterval(lockInterval);
+              return;
+            }
+            fetch(
+              "/plugins/subtitle-editor/router/lock?id=" + parameters.id,
+              {
+                body: JSON.stringify({ locked: true }),
+                method: 'PUT',
+                ...fetchCredentials,
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  ...fetchCredentials.headers,
+                },
+              }
+            );
+          };
+          lockInterval = setInterval(
+            setLock,
+            30*1000,
+          );
+          setLock();
+
+
           const [
             videoDataRequest,
             captionsRequest,
@@ -564,7 +597,7 @@ async function register ({
                 };
               }
 
-              if (currentCaptionLanguageId == languageId) {
+              if (currentCaptionLanguageId == languageId && originalHref == location.href) {
                 requestAnimationFrame(updateTimeline);
               }
             };
