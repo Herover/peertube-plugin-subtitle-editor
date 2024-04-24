@@ -291,7 +291,7 @@ async function register ({
             visualizeAudioElement.innerText = "Loading...";
             visualizeAudioElement.disabled = true;
 
-            const audioData = await fetch(smalestVideoFile.fileDownloadUrl, fetchCredentials);
+            const audioData = await fetch(smalestVideoFile.fileUrl, fetchCredentials);
             const audioCtx = new AudioContext();
             const buffer = await audioCtx.decodeAudioData(await audioData.arrayBuffer());
             
