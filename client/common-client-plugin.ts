@@ -562,10 +562,13 @@ async function register ({
                     if (mouseDown?.box?.type == "cueEnd") {
                       const newTime = mouseDown.box.cue.endTime + deltaX/timelineSecondLength;
                       if (
-                        cueMinSpace == 0 ||
-                        !captionData.cues.find(other =>
-                          other.startTime - cueMinSpace < newTime &&
-                          other.startTime > newTime - cueMinSpace
+                        mouseDown.box.cue.startTime < newTime && 
+                        (
+                          cueMinSpace == 0 ||
+                          !captionData.cues.find(other =>
+                            other.startTime - cueMinSpace < newTime &&
+                            other.startTime > newTime - cueMinSpace
+                          )
                         )
                       ) {
                         mouseDown.box.cue.endTime = newTime;
@@ -582,10 +585,13 @@ async function register ({
                     } else if (mouseDown?.box?.type == "cueStart") {
                       const newTime = mouseDown.box.cue.startTime + deltaX/timelineSecondLength;
                       if (
-                        cueMinSpace == 0 ||
-                        !captionData.cues.find(other =>
-                          other.endTime - cueMinSpace < newTime &&
-                          other.endTime > newTime - cueMinSpace
+                        newTime < mouseDown?.box?.cue.endTime &&
+                        (
+                          cueMinSpace == 0 ||
+                          !captionData.cues.find(other =>
+                            other.endTime - cueMinSpace < newTime &&
+                            other.endTime > newTime - cueMinSpace
+                          )
                         )
                       ) {
                         mouseDown.box.cue.startTime = newTime;
