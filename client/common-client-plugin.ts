@@ -198,6 +198,18 @@ async function register ({
             changed: false,
             cues: (await getVTTDataFromUrl(c.captionPath)).cues,
           })));
+          window.addEventListener("beforeunload", (e) => {
+            const changedCaptions = captionList.find(c => c.changed);
+            if (changedCaptions) {
+              // Most browsers displays a default message instead of this
+              const message = `Unsaved changes in ${changedCaptions.label}, leave now?`;
+              e.returnValue = message;
+              e.preventDefault();
+              return message;
+            }
+
+            return;
+          });
 
           const languages: { [id: string]: string } = await languagesRequest.json();
           renderLanguageList(
