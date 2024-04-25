@@ -189,6 +189,11 @@ export const renderTimeline = (
   duration: number,
   width: number,
   height: number,
+  styles: {
+    text: string,
+    box: string,
+    audioBars: string,
+  },
   barsInterval: number,
   bars?: Float32Array,
 ) => {
@@ -204,11 +209,10 @@ export const renderTimeline = (
 
   ctx.font = "16px Arial";
   ctx.moveTo(0, 0);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, height);
+  ctx.clearRect(0, 0, width, height);
 
-  ctx.strokeStyle = "#000000";
-  ctx.fillStyle = "#000000";
+  ctx.strokeStyle = styles.text;
+  ctx.fillStyle = styles.text;
 
   ctx.beginPath();
   for (let i = 0; i < duration * 10; i += 1) {
@@ -233,7 +237,7 @@ export const renderTimeline = (
   if (bars) {
     const w = barsInterval * timelineSecondLength;
     ctx.beginPath();
-    ctx.fillStyle = "#ff9853";
+    ctx.fillStyle = styles.audioBars;
     ctx.moveTo(0, height);
     bars.forEach((bar, i) => {
       const p1 = (i * barsInterval - time) * timelineSecondLength + (width / 2);
@@ -259,12 +263,12 @@ export const renderTimeline = (
     lanes[lane] = cue.endTime;
 
     if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width / 2 && width / 2 < p2)) {
-      ctx.fillStyle = "#cccccc";
+      ctx.fillStyle = styles.box;
       const y = lane * (cueBoxHeight + 4) + cueY1
       ctx.fillRect(p1, y, p2 - p1, cueBoxHeight);
       // ctx.stroke();
       // ctx.fill();
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = styles.text;
       ctx.textAlign = "left";
       ctx.fillText(cue.text, p1, y + cueBoxHeight);
 

@@ -134,6 +134,13 @@ async function register ({
         return;
       }
 
+      const cssStyles = getComputedStyle(timelineElement);
+      const styles = {
+        text: cssStyles.getPropertyValue("--mainForegroundColor"),
+        box: cssStyles.getPropertyValue("--greyBackgroundColor"),
+        audioBars: cssStyles.getPropertyValue("--mainColorLighter"),
+      }
+
       const [_, query] = location.href.split('?')
       if (query) {
         const parameters = query.split('&').map(p => p.split('=')).reduce((acc, [k, v]) => {
@@ -542,6 +549,7 @@ async function register ({
                   videoDuration,
                   width,
                   height,
+                  styles,
                   audioBarsInterval,
                   audioBars,
                 );
