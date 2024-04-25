@@ -318,7 +318,19 @@ async function register ({
           };
           visualizeAudioSizeElement.innerText = smalestVideoFile ? Math.round(smalestVideoFile.size/1000000) + " mb." : "?";
 
-          const selectLanguage = (languageId: string) => {
+          const selectLanguage = (languageId?: string) => {
+            if (!languageId) {
+              renderLanguageSelector(
+                languageListElement,
+                captionList,
+                currentCaptionLanguageId,
+                selectLanguage,
+              );
+              renderCueTable(cuesElement, [], { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+
+              return;
+            }
+
             currentCaptionLanguageId = languageId;
             const captionData = captionList.find(e => e.id == currentCaptionLanguageId);
             if (!captionData) {
@@ -696,6 +708,8 @@ async function register ({
                       captionList = captionList.filter(e => e.id != currentCaptionLanguageId);
                       if (captionList.length != 0) {
                         selectLanguage(captionList[0].id);
+                      } else {
+                        selectLanguage();
                       }
                     } else {
                       alert("Could not delete");
