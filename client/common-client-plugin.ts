@@ -191,12 +191,22 @@ async function register ({
           }
 
           const captions: { data: VideoCaption[] } = await captionsRequest.json();
-          let captionList = await Promise.all(captions.data.map(async c => ({
+          let captionList: {
+            id: string,
+            label: string,
+            changed: boolean,
+            cues: Cue[],
+          }[] = await Promise.all(captions.data.map(async c => ({
             id: c.language.id,
             label: c.language.label,
-            url: c.captionPath,
             changed: false,
-            cues: (await getVTTDataFromUrl(c.captionPath)).cues,
+            cues: (await getVTTDataFromUrl(c.captionPath)).cues.map<Cue>(c => ({
+              id: c.id,
+              startTime: c.startTime,
+              endTime: c.endTime,
+              text: c.text,
+              align: c.align,
+            })),
           })));
           window.addEventListener("beforeunload", (e) => {
             const changedCaptions = captionList.find(c => c.changed);
@@ -298,7 +308,6 @@ async function register ({
             const audioCtx = new AudioContext();
             const buffer = await audioCtx.decodeAudioData(await audioData.arrayBuffer());
             
-            (window as any).abuf = buffer;
             const data = buffer.getChannelData(0);
             const step = buffer.sampleRate * audioBarsInterval;
             audioBars = new Float32Array(buffer.length/step);
@@ -373,7 +382,7 @@ async function register ({
             };
 
 
-            const selectCue = (cue: any | null) => {
+            const selectCue = (cue: Cue | null) => {
               if (cue == null) {
                 cueInputElement.value = "";
                 cueInputElement.disabled = true;
@@ -501,7 +510,7 @@ async function register ({
             let lastTimelineRender = 0;
             let lastTimelineVideoPosition = 0;
             let lastX: null | number = null;
-            let currentCues: any[] = [];
+            let currentCues: Cue[] = [];
             const updateTimeline = (t: number) => {
               if (videoIsPlaying) {
                 videoPosition += (t-lastTimelineRender)/1000;
@@ -668,7 +677,6 @@ async function register ({
               changed: true,
               id: addNewLanguageListElement.value,
               label: languages[addNewLanguageListElement.value],
-              url: "",
               cues: [],
             });
             selectLanguage(addNewLanguageListElement.value);
@@ -681,8 +689,7 @@ async function register ({
                 changed: true,
                 id: addNewLanguageListElement.value,
                 label: languages[addNewLanguageListElement.value],
-                url: "",
-                cues: (await getVTTDataFromUrl(existing.url)).cues,
+                cues: existing.cues.map(c => ({ ...c })),
               });
               selectLanguage(addNewLanguageListElement.value);
             }

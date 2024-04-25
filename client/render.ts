@@ -103,10 +103,10 @@ export const renderLanguageList = (element: HTMLSelectElement, languages: { id: 
 
 interface RenderTableOpts {
   time?: number;
-  onCueSelected?: (cue: any, i: number) => any;
+  onCueSelected?: (cue: Cue, i: number) => any;
 };
 
-export const renderCueTable = (table: Element, cues: any[], opts: RenderTableOpts) => {
+export const renderCueTable = (table: Element, cues: Cue[], opts: RenderTableOpts) => {
   table.innerHTML = "";
 
   cues.map(e => e)
@@ -152,7 +152,7 @@ export const renderCueTable = (table: Element, cues: any[], opts: RenderTableOpt
   return table;
 };
 
-export const generateVTT = (cues: any[]) => {
+export const generateVTT = (cues: Cue[]) => {
   let result = "WEBVTT FILE\r\n\r\n";
 
   cues.forEach(cue => {
