@@ -16,17 +16,35 @@ async function register ({
 
   registerHook({
     target: 'action:video-edit.init',
-    handler: (data: any) => {
-      const videoId = window.location.pathname.match(/(?!\/)[\d\w\-]*$/);
-      if (!videoId || videoId.length == 0) {
+    handler: async (data: any) => {
+      // Required on all requests as videos might be private or otherwise limited to specific accounts
+      const fetchCredentials: RequestInit = {
+        credentials: 'include',
+        headers: {
+          "authorization": "Bearer " + localStorage.getItem("access_token") || "",
+        },
+      };
+
+      const videoIdMatch = window.location.pathname.match(/(?!\/videos\/update\/)[\d\w\-]*$/);
+      if (!videoIdMatch || videoIdMatch.length == 0) {
         alert("No id found")
         return;
+      }
+      let videoId = videoIdMatch[0];
+      if (!videoId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+        // Prefer UUID format as lock mechanism doesn't work with short id
+        const videoInfoReq = await fetch("/api/v1/videos/" + videoId, fetchCredentials);
+        if (videoInfoReq.status != 200) {
+          return;
+        }
+        const videoInfo = await videoInfoReq.json();
+        videoId = videoInfo.uuid;
       }
       const link = document.createElement("a")
       link.innerText = 'Open subtitle editor'
       link.classList.add("nav-link")
       link.classList.add("nav-item")
-      link.href = "/p/subtitles?id=" + videoId[0]
+      link.href = "/p/subtitles?id=" + videoId
       document.querySelector('.video-edit .nav-tabs')?.appendChild(link)
     }
   })

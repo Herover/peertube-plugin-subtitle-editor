@@ -10,8 +10,17 @@ async function register ({ peertubeHelpers, getRouter, storageManager }: Registe
   const router = getRouter();
 
   router.get('/lock', async (req, res) => {
-    const user = await peertubeHelpers.user.getAuthUser(res);
     const videoId = req.query.id as string;
+    if (!videoId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      peertubeHelpers.logger.error("Possibly invalid videoid");
+      res.json({
+        locked: true,
+        changed: "",
+      });
+      return
+    }
+    const user = await peertubeHelpers.user.getAuthUser(res);
+    peertubeHelpers.videos.loadByUrl
     const video = await peertubeHelpers.videos.loadByIdOrUUID(videoId);
 
     if (!user || !userIdCanAccessVideo(user.id, video.channelId)) {
@@ -30,8 +39,16 @@ async function register ({ peertubeHelpers, getRouter, storageManager }: Registe
   });
 
   router.put('/lock', async (req, res) => {
-    const user = await peertubeHelpers.user.getAuthUser(res);
     const videoId = req.query.id as string;
+    if (!videoId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+      peertubeHelpers.logger.error("Possibly invalid videoid");
+      res.json({
+        locked: true,
+        changed: "",
+      });
+      return
+    }
+    const user = await peertubeHelpers.user.getAuthUser(res);
     const newState = req.body.locked as boolean;
     const video = await peertubeHelpers.videos.loadByIdOrUUID(videoId);
 
