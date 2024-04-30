@@ -32,6 +32,8 @@ Some general tips for using the editor:
 
 * The editor will mostly use built in Peertube APIs and their security features.
 
+* It creates the endpoint `/plugins/subtitle-editor/router/lock` which is used for clients to indicate that someone is editing captions for a video.
+
 * It will load most colors from CSS variables, meaning if you have a custom theme that changes bootstrap colors or `--mainForegroundColor, --greyBackgroundColor, --mainColorLighter`, the editor should be able to adapt.
 
 * If a user wants to visualize audio it will download the lowest quality version of the video. If you want to save bandwidth, and help users with low spec computers, transcoding videos to a low quality can help.
