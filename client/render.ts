@@ -1,3 +1,4 @@
+import { Cue, TextSTyle as TextStyle } from "./types";
 import { formatTime } from "./util";
 
 export const renderBasics = (parent: Element) => {
@@ -30,12 +31,17 @@ export const renderBasics = (parent: Element) => {
           <div class="subtitle-editor-overflow">
             <div id="subtitle-video-viewer"></div>
             <div id="subtitle-preview"></div>
-            <p>
+            <div class="my-2">
               <span id="subtitle-timestamp">00:00:00.000</span>
               <button id="subtitle-set-start" class="btn btn-secondary">Set start</button>
               <button id="subtitle-set-end" class="btn btn-secondary">Set end</button>
+              <div class="btn-group">
+                <button id="subtitle-cue-style-italic" type="button" class="btn btn-secondary subtitle-cue-italic">Italic</button>
+                <button id="subtitle-cue-style-bold" type="button" class="btn btn-secondary subtitle-cue-bold">Bold</button>
+                <button id="subtitle-cue-style-underline" type="button" class="btn btn-secondary subtitle-cue-underline">Underline</button>
+              </div>
               <button id="subtitle-delete-cue" class="btn btn-warning">Delete</button>
-            </p>
+            </div>
             <textarea id="subtitle-cue-input" class="form-control"></textarea>
           </div>
         </div>
@@ -88,6 +94,22 @@ export const renderLanguageSelector = (
     element.appendChild(document.createTextNode(" "));
   });
 };
+
+export const renderPreview = (element: HTMLDivElement, cues: Cue[]) => {
+  element.innerHTML = "";
+  cues.forEach(cue => {
+    const span = document.createElement("span");
+    span.innerText = cue.text;
+    if (cue.style == TextStyle.BOLD) {
+      span.setAttribute("class", "subtitle-cue-bold")
+    } else if (cue.style == TextStyle.ITALIC) {
+      span.setAttribute("class", "subtitle-cue-italic")
+    } else if (cue.style == TextStyle.UNDERLINE) {
+      span.setAttribute("class", "subtitle-cue-underline")
+    }
+    element.appendChild(span);
+  });
+}
 
 export const renderLanguageList = (element: HTMLSelectElement, languages: { id: string, label: string, disabled: boolean }[]) => {
   languages.forEach(lang => {
@@ -145,6 +167,13 @@ export const renderCueTable = (table: Element, cues: Cue[], opts: RenderTableOpt
       text.innerText = cue.text;
       e.appendChild(text);
       row.appendChild(e);
+      if (cue.style == TextStyle.BOLD) {
+        text.setAttribute("class", "subtitle-cue-bold")
+      } else if (cue.style == TextStyle.ITALIC) {
+        text.setAttribute("class", "subtitle-cue-italic")
+      } else if (cue.style == TextStyle.UNDERLINE) {
+        text.setAttribute("class", "subtitle-cue-underline")
+      }
 
       table.appendChild(row);
     });
@@ -166,7 +195,13 @@ export const generateVTT = (cues: Cue[]) => {
     }
     result += "\r\n";
 
+    if (cue.style !== TextStyle.NONE) {
+      result += "<" + cue.style + ">"
+    }
     result += cue.text;
+    if (cue.style !== TextStyle.NONE) {
+      result += "</" + cue.style + ">"
+    }
     result += "\r\n\r\n";
   });
 
@@ -182,6 +217,7 @@ export interface TimelineClickBox {
   cue: any,
 };
 export const timelineSecondLength = 100;
+const timelineFont = "16px Arial";
 export const renderTimeline = (
   ctx: CanvasRenderingContext2D,
   cues: any[],
@@ -207,14 +243,14 @@ export const renderTimeline = (
   // TODO: only calculate when cues change
   let lanes: number[] = [];
 
-  ctx.font = "16px Arial";
+  ctx.font = timelineFont;
   ctx.moveTo(0, 0);
   ctx.clearRect(0, 0, width, height);
 
-  ctx.strokeStyle = styles.text;
-  ctx.fillStyle = styles.text;
 
   ctx.beginPath();
+  ctx.strokeStyle = styles.text;
+  ctx.fillStyle = styles.text;
   for (let i = 0; i < duration * 10; i += 1) {
     let t = i / 10;
     const p = Math.floor((t - time) * timelineSecondLength + (width / 2));
@@ -270,6 +306,20 @@ export const renderTimeline = (
       // ctx.fill();
       ctx.fillStyle = styles.text;
       ctx.textAlign = "left";
+      if (cue.style == TextStyle.BOLD) {
+        ctx.font = "bold " + timelineFont;
+      } else if (cue.style == TextStyle.ITALIC) {
+        ctx.font = "italic " + timelineFont;
+      } else if (cue.style == TextStyle.UNDERLINE) {
+        ctx.font = timelineFont;
+        const textWidth = ctx.measureText(cue.text).width;
+        ctx.beginPath();
+        ctx.moveTo(p1, y + cueBoxHeight);
+        ctx.lineTo(p1 + textWidth, y + cueBoxHeight);
+        ctx.stroke();
+      } else {
+        ctx.font = timelineFont;
+      }
       ctx.fillText(cue.text, p1, y + cueBoxHeight);
 
       clickBoxes.push({

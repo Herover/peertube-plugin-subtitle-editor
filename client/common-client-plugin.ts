@@ -1,9 +1,10 @@
 import type { RegisterClientOptions } from '@peertube/peertube-types/client'
 import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
-import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderTimeline, TimelineClickBox, timelineSecondLength } from './render';
+import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderPreview, renderTimeline, TimelineClickBox, timelineSecondLength } from './render';
 import { formatTime } from './util';
 import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types/peertube-models';
+import { Cue, TextSTyle } from './types';
 
 const newCueLength = 3;
 
@@ -117,6 +118,9 @@ async function register ({
       const deleteCueElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-delete-cue");
       const visualizeAudioElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-visualize-audio");
       const visualizeAudioSizeElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-visualize-audio-size");
+      const cueStyleItalicElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-cue-style-italic");
+      const cueStyleBoldElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-cue-style-bold");
+      const cueStyleUnderlineElement = rootEl.querySelector<HTMLButtonElement>("#subtitle-cue-style-underline");
       
       const timestampElement = rootEl.querySelector<HTMLSpanElement>("#subtitle-timestamp");
       const vttResultElement = rootEl.querySelector<HTMLPreElement>("#subtitle-vtt-result");
@@ -145,6 +149,9 @@ async function register ({
         || !deleteCueElement
         || !visualizeAudioElement
         || !visualizeAudioSizeElement
+        || !cueStyleItalicElement
+        || !cueStyleBoldElement
+        || !cueStyleUnderlineElement
         || !vttResultElement) {
         console.warn("unable to render missing stuff");
         alert("Something didn't load properly");
@@ -225,13 +232,17 @@ async function register ({
             id: c.language.id,
             label: c.language.label,
             changed: false,
-            cues: (await getVTTDataFromUrl(c.captionPath)).cues.map<Cue>(c => ({
-              id: c.id,
-              startTime: c.startTime,
-              endTime: c.endTime,
-              text: c.text,
-              align: c.align,
-            })),
+            cues: (await getVTTDataFromUrl(c.captionPath)).cues.map<Cue>(c => {
+              const text = getStyledText(c.text);
+              return {
+                id: c.id,
+                startTime: c.startTime,
+                endTime: c.endTime,
+                text: text.text,
+                align: c.align,
+                style: text.style,
+              };
+            }),
           })));
           window.addEventListener("beforeunload", (e) => {
             const changedCaptions = captionList.find(c => c.changed);
@@ -389,7 +400,14 @@ async function register ({
               }
             };
             cueInsertCueElement.onclick = () => {
-              const cue = new VTTCue(videoPosition, videoPosition + newCueLength, "");
+              const cue = {
+                id: "",
+                text: "",
+                startTime: videoPosition,
+                endTime: videoPosition + newCueLength,
+                style: TextSTyle.NONE,
+                align: "",
+              };
               captionData.cues.push(cue);
               captionData.cues.sort((a, b) => a.startTime - b.startTime);
               selectCue(cue);
@@ -399,7 +417,14 @@ async function register ({
               const cueHere = captionData.cues.find(c => c.startTime <= videoPosition && videoPosition <= c.endTime);
               const t = cueHere ? cueHere.endTime + cueMinSpace : videoPosition;
               
-              const cue = new VTTCue(t, t + newCueLength, "");
+              const cue = {
+                id: "",
+                text: "",
+                startTime: t,
+                endTime:  + newCueLength,
+                style: TextSTyle.NONE,
+                align: "",
+              };
               captionData.cues.push(cue);
               captionData.cues.sort((a, b) => a.startTime - b.startTime);
               selectCue(cue);
@@ -414,12 +439,18 @@ async function register ({
                 cueSetStartElement.disabled = true;
                 cueSetEndElement.disabled = true;
                 deleteCueElement.disabled = true;
+                cueStyleItalicElement.disabled = true;
+                cueStyleBoldElement.disabled = true;
+                cueStyleUnderlineElement.disabled = true;
                 return;
               }
               cueInputElement.disabled = false;
               cueSetStartElement.disabled = false;
               cueSetEndElement.disabled = false;
               deleteCueElement.disabled = false;
+              cueStyleItalicElement.disabled = false;
+              cueStyleBoldElement.disabled = false;
+              cueStyleUnderlineElement.disabled = false;
 
               cueInputElement.value = cue.text;
               cueInputElement.focus();
@@ -469,12 +500,40 @@ async function register ({
               }
 
               cueInsertCueAfterSelectedElement.onclick = () => {
-                const cue2 = new VTTCue(cue.endTime + cueMinSpace, cue.endTime + cueMinSpace + newCueLength, "");
+                const cue2 = {
+                  startTime: cue.endTime + cueMinSpace,
+                  endTime: cue.endTime + cueMinSpace + newCueLength,
+                  text: "",
+                  id: "",
+                  style: TextSTyle.NONE,
+                  align: "",
+                };
                 captionData.cues.push(cue2);
                 captionData.cues.sort((a, b) => a.startTime - b.startTime);
                 selectCue(cue2);
                 renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
               }
+
+              cueStyleItalicElement.onclick = () => {
+                cue.style = cue.style != TextSTyle.ITALIC ? TextSTyle.ITALIC : TextSTyle.NONE;
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
+                renderPreview(previewElement, currentCues);
+              };
+              cueStyleBoldElement.onclick = () => {
+                cue.style = cue.style != TextSTyle.BOLD ? TextSTyle.BOLD : TextSTyle.NONE;
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
+                renderPreview(previewElement, currentCues);
+                
+              };
+              cueStyleUnderlineElement.onclick = () => {
+                cue.style = cue.style != TextSTyle.UNDERLINE ? TextSTyle.UNDERLINE : TextSTyle.NONE;
+                renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
+                currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
+                renderPreview(previewElement, currentCues);
+                
+              };
 
               renderCueTable(cuesElement, captionData.cues, { time: videoPosition, onCueSelected: (cue => selectCue(cue)) });
             };
@@ -543,10 +602,7 @@ async function register ({
               }
               if (videoPosition != lastTimelineVideoPosition) {
                 currentCues = captionData.cues.filter(cue => cue.startTime < videoPosition && videoPosition < cue.endTime);
-                const previewText = currentCues.map(cue => cue.text).join("\n");
-                if (previewText != previewElement.innerText) {
-                  previewElement.innerText = previewText;
-                }
+                renderPreview(previewElement, currentCues);
               }
 
               timelineContext = timelineElement.getContext("2d");
@@ -759,6 +815,17 @@ async function register ({
     }
   })
 }
+
+const getStyledText = (htmlText: string) => {
+  let style: TextSTyle = TextSTyle.NONE;
+  if (htmlText.startsWith("<b>") && htmlText.endsWith("</b>")) style = TextSTyle.BOLD;
+  if (htmlText.startsWith("<i>") && htmlText.endsWith("</i>")) style = TextSTyle.ITALIC;
+  if (htmlText.startsWith("<u>") && htmlText.endsWith("</u>")) style = TextSTyle.UNDERLINE;
+  if (style != TextSTyle.NONE) {
+    return { text: htmlText.slice(3, -4), style};
+  }
+  return { text: htmlText, style };
+};
 
 export {
   register
