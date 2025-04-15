@@ -226,6 +226,7 @@ export const renderTimeline = (
   width: number,
   height: number,
   styles: {
+    boxText: string,
     text: string,
     box: string,
     audioBars: string,
@@ -236,7 +237,7 @@ export const renderTimeline = (
   const clickBoxes: TimelineClickBox[] = [];
   const dragRadius = 8;
   const cueY1 = 30;
-  const cueY2 = 50;
+  const cueY2 = 54;
   const cueBoxHeight = cueY2 - cueY1;
   // const cueHeight = 20;
 
@@ -298,13 +299,13 @@ export const renderTimeline = (
     }
     lanes[lane] = cue.endTime;
 
+
     if ((p1 < width && 0 < p1) || (p2 < width && 0 < p2) || (p1 < width / 2 && width / 2 < p2)) {
       ctx.fillStyle = styles.box;
       const y = lane * (cueBoxHeight + 4) + cueY1
       ctx.fillRect(p1, y, p2 - p1, cueBoxHeight);
-      // ctx.stroke();
-      // ctx.fill();
-      ctx.fillStyle = styles.text;
+      
+      ctx.fillStyle = styles.boxText;
       ctx.textAlign = "left";
       if (cue.style == TextStyle.BOLD) {
         ctx.font = "bold " + timelineFont;
@@ -312,15 +313,17 @@ export const renderTimeline = (
         ctx.font = "italic " + timelineFont;
       } else if (cue.style == TextStyle.UNDERLINE) {
         ctx.font = timelineFont;
-        const textWidth = ctx.measureText(cue.text).width;
+        const textWidth = Math.min(p2 - p1, ctx.measureText(cue.text).width);
         ctx.beginPath();
-        ctx.moveTo(p1, y + cueBoxHeight);
-        ctx.lineTo(p1 + textWidth, y + cueBoxHeight);
+        ctx.moveTo(p1, y + cueBoxHeight - 4);
+        ctx.lineTo(p1 + textWidth, y + cueBoxHeight - 4);
+        ctx.strokeStyle = styles.boxText;
         ctx.stroke();
       } else {
         ctx.font = timelineFont;
       }
-      ctx.fillText(cue.text, p1, y + cueBoxHeight);
+
+      ctx.fillText(cue.text, p1, y + cueBoxHeight - 8);
 
       clickBoxes.push({
         type: "cueStart",
@@ -349,6 +352,7 @@ export const renderTimeline = (
     }
   }
 
+  ctx.strokeStyle = styles.text;
   ctx.beginPath();
   ctx.moveTo(width / 2, 0);
   ctx.lineTo(width / 2, height);

@@ -3,7 +3,7 @@ import { PeerTubePlayer } from '@peertube/embed-api'
 import vtt from "vtt.js";
 import { generateVTT, renderBasics, renderCueTable, renderLanguageList, renderLanguageSelector, renderPreview, renderTimeline, TimelineClickBox, timelineSecondLength } from './render';
 import { formatTime } from './util';
-import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types/peertube-models';
+import { VideoCaption, VideoDetails, VideoFile } from '@peertube/peertube-types';
 import { Cue, TextSTyle } from './types';
 
 const newCueLength = 3;
@@ -161,9 +161,10 @@ async function register ({
 
       const cssStyles = getComputedStyle(timelineElement);
       const styles = {
-        text: cssStyles.getPropertyValue("--mainForegroundColor"),
-        box: cssStyles.getPropertyValue("--greyBackgroundColor"),
-        audioBars: cssStyles.getPropertyValue("--mainColorLighter"),
+        text: cssStyles.getPropertyValue("--fg"),
+        boxText: cssStyles.getPropertyValue("--on-primary"),
+        box: cssStyles.getPropertyValue("--primary"),
+        audioBars: cssStyles.getPropertyValue("--primary-50"),
       }
 
       const [_, query] = location.href.split('?')
