@@ -47,7 +47,7 @@
     "fr-FR": "./languages/fr.json"
   },
   "devDependencies": {
-    "@peertube/peertube-types": "^6.0.4",
+    "@peertube/peertube-types": "^7.1.1",
     "@tsconfig/node16": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
@@ -62,7 +62,8 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@peertube/embed-api": "^0.0.7",
+    "@peertube/embed-api": "^0.2.0",
+    "jschannel": "^1.0.2",
     "vtt.js": "^0.13.0"
   }
 }

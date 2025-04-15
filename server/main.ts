@@ -1,5 +1,5 @@
 import type { RegisterServerOptions } from '@peertube/peertube-types'
-import { VideoChannelModel } from '@peertube/peertube-types/server/core/models/video/video-channel';
+// import { VideoChannelModel } from '@peertube/peertube-types';
 
 interface Lock {
   locked: boolean,
@@ -76,10 +76,10 @@ async function register ({ peertubeHelpers, getRouter, storageManager }: Registe
     }
 
     const userVideoChannelList =
-      await queryDb<VideoChannelModel>(`SELECT * FROM "videoChannel" WHERE "id" = ${userId};`);
+      await queryDb<any>(`SELECT * FROM "videoChannel" WHERE "id" = ${userId};`);
     const videoChannel = userVideoChannelList[0];
     const accountVideoChannelList =
-      await queryDb<VideoChannelModel>(`SELECT * FROM "videoChannel" WHERE "accountId" = ${videoChannel.accountId};`);
+      await queryDb<any>(`SELECT * FROM "videoChannel" WHERE "accountId" = ${videoChannel.accountId};`);
     return accountVideoChannelList.find(v => v && v.id === videoId) !== undefined;
   }
 
